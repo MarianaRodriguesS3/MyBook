@@ -22,27 +22,27 @@
   --text: #ffffff;
   --surface: #111111;
   --border: #333333;
-  --button-active: #1565c0;
-  --button-inactive: #333333;
+  --button-active: #1e1e1f;
+  --button-inactive: #1e1e1f;
   --danger: #ff5555;
 }
 
 .theme-azul {
-  --background: #06294d;
+  --background: #00070e;
   --text: #ffffff;
-  --surface: #0b3b6f;
-  --border: #1c5a91;
-  --button-active: #2196f3;
-  --button-inactive: #17436b;
+  --surface: #010b12;
+  --border: #010111;
+  --button-active: #0e293f;
+  --button-inactive: #0d3356;
   --danger: #ff6b6b;
 }
 
 .theme-verde {
-  --background: #064d24;
+  --background: #000705;
   --text: #ffffff;
-  --surface: #086b35;
+  --surface: #000402;
   --border: #13894b;
-  --button-active: #2e7d32;
+  --button-active: #235c26;
   --button-inactive: #1b4d2b;
   --danger: #ff7777;
 }
