@@ -1,0 +1,69 @@
+.app {
+  min-height: 100vh;
+  --background: white;
+  --text: black;
+  --surface: white;
+  --border: #ddd;
+}
+
+/* Temas */
+.theme-dia {
+  --background: #ffffff;
+  --text: #000000;
+  --surface: #ffffff;
+  --border: #dddddd;
+  --button-active: #1976d2;
+  --button-inactive: #dddddd;
+  --danger: #d00000;
+}
+
+.theme-noite {
+  --background: #000000;
+  --text: #ffffff;
+  --surface: #111111;
+  --border: #333333;
+  --button-active: #1565c0;
+  --button-inactive: #333333;
+  --danger: #ff5555;
+}
+
+.theme-azul {
+  --background: #06294d;
+  --text: #ffffff;
+  --surface: #0b3b6f;
+  --border: #1c5a91;
+  --button-active: #2196f3;
+  --button-inactive: #17436b;
+  --danger: #ff6b6b;
+}
+
+.theme-verde {
+  --background: #064d24;
+  --text: #ffffff;
+  --surface: #086b35;
+  --border: #13894b;
+  --button-active: #2e7d32;
+  --button-inactive: #1b4d2b;
+  --danger: #ff7777;
+}
+
+.theme-matrix {
+  --background: #000000;
+  --text: #00ff00;
+  --surface: #050505;
+  --border: #008000;
+  --button-active: #008000;
+  --button-inactive: #111111;
+  --danger: #ff0000;
+}
+
+.content {
+  min-height:100vh;
+  transition:margin-left .3s;
+  background: var(--background);
+  color: var(--text);
+}
+
+.content.menu-open {
+  margin-left:330px;
+}

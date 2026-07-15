@@ -1,0 +1,65 @@
+.history {
+  padding: 40px 50px;
+  color: var(--text);
+}
+
+.history h2 {
+  margin: 0 0 30px 0;
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.history-content {
+  min-height: 200px;
+  padding: 30px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.history-content p {
+  font-size: 20px;
+  opacity: .8;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 20px;
+}
+
+.history-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  padding: 8px;
+  border-radius: 8px;
+  transition: background .2s;
+}
+
+.history-item:hover {
+  background: var(--background);
+}
+
+.history-thumbnail {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: white;
+}
+
+.history-name {
+  font-size: 14px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}

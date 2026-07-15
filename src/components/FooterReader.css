@@ -1,0 +1,65 @@
+.reader-footer {
+  flex: 0 0 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  padding: 0 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.footer-button,
+.play-button,
+.search-button {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.footer-button {
+  font-size: 38px;
+}
+
+.play-button {
+  font-size: 45px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-box input {
+  width: 300px;
+  height: 50px;
+  padding: 0 15px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--text);
+  font-size: 18px;
+}
+
+.search-button {
+  font-size: 30px;
+}
+
+.page-counter {
+  min-width: 90px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.reader-footer button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+.reader-footer button:hover:not(:disabled) {
+  opacity: .8;
+}
