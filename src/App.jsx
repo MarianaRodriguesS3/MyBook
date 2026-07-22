@@ -9,9 +9,9 @@ function App() {
     <>
       {
         file ?
-        <Reader />
-        :
-        <Home />
+          <Reader />
+          :
+          <Home />
       }
     </>
   );

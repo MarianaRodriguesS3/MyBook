@@ -6,8 +6,8 @@ const translations = {
         theme: "Tema",
         language: "Idioma",
         speech: "Fala",
-        enabled: "Ativado",
-        disabled: "Desativado",
+        enabled: "Habilitado",
+        disabled: "Desabilitado",
         history: "Histórico",
         noBooks: "Nenhum livro no histórico.",
         day: "Dia",
@@ -25,10 +25,12 @@ const translations = {
         play: "Ler em voz alta",
         search: "Buscar",
         searchPlaceholder: "Buscar página ou palavra...",
-        loadingPage: "Carregando página..."
+        loadingPage: "Carregando página...",
+        enableSpeechInSettings: "Habilite o modo fala em configurações",
+        speechDisabledTitle: "Modo fala desativado"
     },
 
-    "us": {
+    "en-US": {
         headerTitle: "Reading now",
         settings: "Settings",
         theme: "Theme",
@@ -53,10 +55,12 @@ const translations = {
         play: "Read aloud",
         search: "Search",
         searchPlaceholder: "Search page or word...",
-        loadingPage: "Loading page..."
+        loadingPage: "Loading page...",
+        enableSpeechInSettings: "Enable speech mode in settings",
+        speechDisabledTitle: "Speech mode disabled"
     },
 
-    "es": {
+    "es-ES": {
         headerTitle: "Leyendo ahora",
         settings: "Configuraciones",
         theme: "Tema",
@@ -81,7 +85,9 @@ const translations = {
         play: "Leer en voz alta",
         search: "Buscar",
         searchPlaceholder: "Buscar página o palabra...",
-        loadingPage: "Cargando página..."
+        loadingPage: "Cargando página...",
+        enableSpeechInSettings: "Habilita el modo voz en configuraciones",
+        speechDisabledTitle: "Modo voz desactivado"
     },
 };
 

@@ -49,20 +49,9 @@ function History() {
                 {entries.length > 0 && (
                     <div className="history-grid">
                         {entries.map((entry) => (
-                            <button
-                                key={entry.id}
-                                className="history-item"
-                                onClick={() => handleOpen(entry)}
-                                title={entry.fileName}
-                            >
-                                <img
-                                    src={entry.thumbnail}
-                                    alt=""
-                                    className="history-thumbnail"
-                                />
-                                <span className="history-name">
-                                    {entry.fileName}
-                                </span>
+                            <button key={entry.id} className="history-item" onClick={() => handleOpen(entry)} title={entry.fileName}>
+                                <img src={entry.thumbnail} alt="" className="history-thumbnail" />
+                                <span className="history-name"> {entry.fileName} </span>
                             </button>
                         ))}
                     </div>

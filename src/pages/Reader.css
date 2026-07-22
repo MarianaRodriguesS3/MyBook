@@ -117,3 +117,21 @@
 
 
 }
+
+/* Marca-texto da busca — cor diferente de .sentence.active
+   pra distinguir "frase sendo narrada" de "ocorrência
+   encontrada na busca", já que os dois podem, em tese,
+   existir ao mesmo tempo na mesma página */
+
+.sentence-search-match {
+
+  background-color:
+    rgba(0, 174, 255, 0.35);
+
+  border-radius:
+    4px;
+
+  box-shadow:
+    0 0 8px rgba(0, 174, 255, 0.7);
+
+}

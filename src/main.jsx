@@ -10,16 +10,16 @@ import "./index.css";
 ReactDOM.createRoot(
   document.getElementById("root")
 )
-.render(
-  <React.StrictMode>
-    <ThemeProvider>
-      <LanguageProvider>
-        <SpeechProvider>
-          <ReaderProvider>
-            <App />
-          </ReaderProvider>
-        </SpeechProvider>
-      </LanguageProvider>
-    </ThemeProvider>
-  </React.StrictMode>
-);
+  .render(
+    <React.StrictMode>
+      <ThemeProvider>
+        <LanguageProvider>
+          <SpeechProvider>
+            <ReaderProvider>
+              <App />
+            </ReaderProvider>
+          </SpeechProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </React.StrictMode>
+  );

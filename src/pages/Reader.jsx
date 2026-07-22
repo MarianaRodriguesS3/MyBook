@@ -1,6 +1,6 @@
-
 import {
   useEffect,
+  useRef,
   useState
 } from "react";
 
@@ -41,7 +41,12 @@ function Reader() {
     setMode,
 
     loadPage,
-    getPageContent
+    getPageContent,
+
+    goToPage,
+    searchText,
+    highlight,
+    setHighlight
 
 
   } = useReader();
@@ -65,6 +70,43 @@ function Reader() {
   // frase atual para destaque
   const [activeSentence,setActiveSentence] =
     useState(null);
+
+
+
+  // referência para chamar métodos do
+  // SpeechControl diretamente (seekTo)
+  const speechControlRef =
+    useRef(null);
+
+
+
+
+  /*
+    totalPages "ao vivo" — usado dentro de
+
+    funções assíncronas (findAndReadNextPage),
+
+    já que a variável totalPages comum fica
+
+    congelada no valor de quando a função foi
+
+    criada, mesmo que o estado seja atualizado
+
+    depois (ex: PDF ainda carregando, totalPages
+
+    ainda é 0 no momento do clique em play).
+  */
+
+  const totalPagesRef =
+    useRef(totalPages);
+
+
+
+  useEffect(()=>{
+
+    totalPagesRef.current = totalPages;
+
+  },[totalPages]);
 
 
 
@@ -128,10 +170,178 @@ function Reader() {
 
 
   /*
+    Procura, a partir de startPage, a próxima
+    página com texto, CARREGANDO cada candidata
+    antes de checar o conteúdo.
+
+    Se o documento ainda estiver carregando
+    (totalPagesRef.current === 0), espera um
+    pouco e tenta de novo antes de desistir.
+  */
+
+async function findAndReadNextPage(startPage){
+
+
+  console.log(
+    "PROCURANDO PÁGINA COM TEXTO A PARTIR DE:",
+    startPage,
+    "TOTAL:",
+    totalPagesRef.current
+  );
+
+
+
+  let waited = 0;
+
+
+  while(
+    totalPagesRef.current === 0 &&
+    waited < 5000
+  ){
+
+
+    console.log(
+      "DOCUMENTO AINDA CARREGANDO, AGUARDANDO..."
+    );
+
+
+
+    await new Promise(
+      resolve => setTimeout(resolve, 150)
+    );
+
+
+
+    waited += 150;
+
+
+  }
+
+
+
+  if(totalPagesRef.current === 0){
+
+    console.log(
+      "DOCUMENTO NÃO CARREGOU A TEMPO"
+    );
+
+    setPlaying(false);
+
+    return null;
+
+  }
+
+
+  let next =
+    startPage;
+
+
+
+  while(
+    next <= totalPagesRef.current
+  ){
+
+
+    console.log(
+      "TENTANDO CARREGAR PÁGINA:",
+      next
+    );
+
+
+
+    const content =
+      await loadPage(
+        next
+      );
+
+
+
+    console.log(
+      "CONTEÚDO DA PÁGINA:",
+      next,
+      content
+    );
+
+
+
+    if(
+      content &&
+      content.text &&
+      content.text.trim().length > 0
+    ){
+
+
+      console.log(
+        "PÁGINA COM TEXTO ENCONTRADA:",
+        next
+      );
+
+
+
+      setCurrentPage(
+        next
+      );
+
+
+      setReadingPage(
+        next
+      );
+
+
+      return next;
+
+
+    }
+
+
+
+    next++;
+
+
+  }
+
+
+
+  console.log(
+    "NENHUMA PÁGINA COM TEXTO ENCONTRADA"
+  );
+
+
+  setPlaying(false);
+
+
+  return null;
+
+
+}
+
+
+
+
+  /*
+    O botão de play chama diretamente
+
+    startReading(currentPage) dentro do
+
+    SpeechControl — não navega mais para
+
+    outra página. findAndReadNextPage
+
+    continua existindo só para o avanço
+
+    automático em handleFinishPage.
+  */
+
+
+
+
+
+
+  /*
     Troca automática após leitura
   */
 
-  function handleFinishPage(pageNumber){
+  async function handleFinishPage(pageNumber){
 
 
 
@@ -152,60 +362,16 @@ function Reader() {
 
 
 
-      let next =
-        pageNumber + 1;
+      await findAndReadNextPage(
+        pageNumber + 1
+      );
 
-
-
-      while(
-        next <= totalPages
-      ){
-
-
-
-        const page =
-          getPageContent(
-            next
-          );
-
-
-
-        if(
-          page &&
-          page.text &&
-          page.text.trim()
-        ){
-
-
-          setCurrentPage(
-            next
-          );
-
-
-          return;
-
-
-        }
-
-
-
-        next++;
-
-
-      }
-
-
-
-      setPlaying(false);
 
 
       return;
 
 
     }
-
-
-
 
 
 
@@ -228,17 +394,17 @@ function Reader() {
     ){
 
 
-      const rightPage =
-        getPageContent(
+      const rightContent =
+        await loadPage(
           currentPage + 1
         );
 
 
 
       if(
-        rightPage &&
-        rightPage.text &&
-        rightPage.text.trim()
+        rightContent &&
+        rightContent.text &&
+        rightContent.text.trim()
       ){
 
 
@@ -271,8 +437,42 @@ function Reader() {
     ){
 
 
-      setCurrentPage(
-        nextPair
+      const content =
+        await loadPage(
+          nextPair
+        );
+
+
+
+      if(
+        content &&
+        content.text &&
+        content.text.trim()
+      ){
+
+
+        setCurrentPage(
+          nextPair
+        );
+
+
+        setReadingPage(
+          nextPair
+        );
+
+
+
+        return;
+
+      }
+
+
+
+      // par sem texto: procura a próxima
+      // página válida a partir daqui
+
+      await findAndReadNextPage(
+        nextPair + 1
       );
 
 
@@ -294,6 +494,47 @@ function Reader() {
 
 
 
+
+
+
+
+  /*
+    Clique numa frase do texto: só faz
+
+    efeito se o áudio estiver pausado
+
+    (o próprio ReaderBook já só deixa
+
+    clicar nesse caso, mas confere de
+
+    novo aqui por segurança). Manda o
+
+    SpeechControl começar a ler exatamente
+
+    a partir da frase clicada.
+  */
+
+  function handleSentenceClick(pageNumber, sentenceIndex){
+
+
+    if(playing){
+
+      return;
+
+    }
+
+
+
+    speechControlRef.current?.seekTo(
+
+      pageNumber,
+
+      sentenceIndex
+
+    );
+
+
+  }
 
 
 
@@ -328,11 +569,20 @@ function Reader() {
     setActiveSentence(null);
 
 
+    const step =
+      mode === "landscape"
+        ? 2
+        : 1;
+
+
     if(currentPage > 1){
 
 
       setCurrentPage(
-        currentPage - 1
+        Math.max(
+          1,
+          currentPage - step
+        )
       );
 
 
@@ -354,6 +604,11 @@ function Reader() {
     setActiveSentence(null);
 
 
+    const step =
+      mode === "landscape"
+        ? 2
+        : 1;
+
 
     if(
       currentPage < totalPages
@@ -361,11 +616,65 @@ function Reader() {
 
 
       setCurrentPage(
-        currentPage + 1
+        Math.min(
+          totalPages,
+          currentPage + step
+        )
       );
 
 
     }
+
+
+  }
+
+
+
+
+
+
+
+
+  /*
+    Resultado da busca selecionado (único
+    resultado automático ou item clicado na
+    lista): navega até a página e guarda a
+    ocorrência em `highlight` (ReaderContext)
+    para o ReaderBook destacar o trecho.
+
+    Limpa activeSentence pra não misturar o
+    destaque da busca com o destaque de leitura
+    em voz alta.
+  */
+
+  function handleSearchResultSelect(result){
+
+
+    setActiveSentence(null);
+
+    /*
+      Resultado do tipo "page" (número de página
+      digitado direto) não tem ocorrência de texto
+      associada — só navega, sem destacar nada.
+    */
+
+    if(result.kind === "page"){
+
+      setHighlight(null);
+
+    }else{
+
+      setHighlight({
+        page: result.page,
+        charIndex: result.charIndex,
+        length: result.length
+      });
+
+    }
+
+    goToPage(
+      result.page
+    );
 
 
   }
@@ -403,37 +712,48 @@ function Reader() {
 
         activeSentence={activeSentence}
 
-      />
-
-
-
-
-
-
-      <SpeechControl
-
-        currentPage={currentPage}
-
-        getPageContent={getPageContent}
-
-        totalPages={totalPages}
-
-        mode={mode}
-
         playing={playing}
 
-        setPlaying={setPlaying}
+        onSentenceClick={handleSentenceClick}
 
-        setReadingPage={setReadingPage}
-
-        setActiveSentence={setActiveSentence}
-
-        onFinishPage={
-          handleFinishPage
-        }
+        searchHighlight={highlight}
 
       />
 
+
+
+
+
+
+<SpeechControl
+
+  ref={speechControlRef}
+
+  currentPage={currentPage}
+
+  getPageContent={getPageContent}
+
+  loadPage={loadPage}
+
+  mode={mode}
+
+  totalPages={totalPages}
+
+  playing={playing}
+
+  setPlaying={setPlaying}
+
+  readingPage={readingPage}
+
+  setReadingPage={setReadingPage}
+
+  setActiveSentence={setActiveSentence}
+
+  onFinishPage={
+    handleFinishPage
+  }
+
+/>
 
 
 
@@ -466,6 +786,12 @@ function Reader() {
 
         closeFile={closeFile}
 
+        goToPage={goToPage}
+
+        searchText={searchText}
+
+        onResultSelect={handleSearchResultSelect}
+
       />
 
 
@@ -478,4 +804,3 @@ function Reader() {
 
 
 export default Reader;
-
