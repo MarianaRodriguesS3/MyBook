@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import translations from "../translations/translations";
 
 const LanguageContext = createContext();
-
 const STORAGE_KEY = "reader-language";
 
 function getStoredLanguage() {

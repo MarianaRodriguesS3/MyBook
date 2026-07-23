@@ -1,13 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import {
-  loadPdfDocument,
-  extractPageContent,
-  renderPageThumbnail,
-} from "../services/pdfService";
-import {
-  saveHistoryEntry,
-  updateHistoryPage,
-} from "../services/historyService";
+import { loadPdfDocument, extractPageContent, renderPageThumbnail, } from "../services/pdfService";
+import { saveHistoryEntry, updateHistoryPage, } from "../services/historyService";
 
 const ReaderContext = createContext();
 const SNIPPET_RADIUS = 32;
@@ -122,10 +115,7 @@ export function ReaderProvider({ children }) {
         err
       );
 
-      const fallback = {
-        text: "",
-        images: [],
-      };
+      const fallback = { text: "", images: [], };
 
       setPageCache(prev => ({
         ...prev,
@@ -159,9 +149,7 @@ export function ReaderProvider({ children }) {
     const matches = [];
 
     for (let page = 1; page <= totalPages; page++) {
-      const content =
-        pageCache[page] || (await loadPage(page));
-
+      const content = pageCache[page] || (await loadPage(page));
       const text = content?.text || "";
 
       if (!text) continue;
@@ -170,42 +158,19 @@ export function ReaderProvider({ children }) {
       let fromIndex = 0;
 
       while (true) {
-        const foundAt = lowerText.indexOf(
-          lowerQuery,
-          fromIndex
-        );
+        const foundAt = lowerText.indexOf(lowerQuery, fromIndex);
 
         if (foundAt === -1) break;
 
-        const start = Math.max(
-          0,
-          foundAt - SNIPPET_RADIUS
-        );
+        const start = Math.max(0, foundAt - SNIPPET_RADIUS);
+        const end = Math.min(text.length, foundAt + lowerQuery.length + SNIPPET_RADIUS);
+        const snippet = (start > 0 ? "…" : "") + text.slice(start, end).trim() + (end < text.length ? "…" : "");
 
-        const end = Math.min(
-          text.length,
-          foundAt +
-          lowerQuery.length +
-          SNIPPET_RADIUS
-        );
+        matches.push({ page, charIndex: foundAt, length: lowerQuery.length, snippet, });
 
-        const snippet =
-          (start > 0 ? "…" : "") +
-          text.slice(start, end).trim() +
-          (end < text.length ? "…" : "");
-
-        matches.push({
-          page,
-          charIndex: foundAt,
-          length: lowerQuery.length,
-          snippet,
-        });
-
-        fromIndex =
-          foundAt + lowerQuery.length;
+        fromIndex = foundAt + lowerQuery.length;
       }
     }
-
     return matches;
   }
 

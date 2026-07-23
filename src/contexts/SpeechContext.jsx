@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 const SpeechContext = createContext();
-
 const STORAGE_KEY = "reader-speech";
 
 function getStoredSpeech() {
@@ -33,10 +32,7 @@ export function SpeechProvider({ children }) {
 
   return (
     <SpeechContext.Provider
-      value={{
-        speech,
-        toggleSpeech
-      }}
+      value={{ speech, toggleSpeech }}
     >
       {children}
     </SpeechContext.Provider>

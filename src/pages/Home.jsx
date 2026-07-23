@@ -7,20 +7,10 @@ import { useSpeech } from "../contexts/SpeechContext";
 import "../App.css";
 
 function Home() {
-  // Controle do menu lateral
+
   const [menuOpen, setMenuOpen] = useState(false);
-
-  // Contexto do tema
-  const {
-    theme,
-    setTheme
-  } = useTheme();
-
-  // Contexto da fala
-  const {
-    speech,
-    toggleSpeech
-  } = useSpeech();
+  const { theme, setTheme } = useTheme();
+  const { speech, toggleSpeech } = useSpeech();
 
   function toggleMenu() {
     setMenuOpen(!menuOpen);
@@ -37,18 +27,12 @@ function Home() {
         toggleSpeech={toggleSpeech}
       />
 
-      <div
-        className={`content ${menuOpen ? "menu-open" : ""
-          }`}
-      >
-
+      <div className={`content ${menuOpen ? "menu-open" : ""}`}>
         <Header
           toggleMenu={toggleMenu}
           menuOpen={menuOpen}
         />
-
         <History />
-
       </div>
     </div>
   );

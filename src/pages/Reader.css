@@ -86,52 +86,19 @@
 }
 
 /* Marca-texto da leitura */
-
 .sentence {
-
   display: inline;
-
-  transition:
-    background-color 0.3s ease;
-
+  transition: background-color 0.3s ease;
 }
-
-
 
 .sentence.active {
-
-
-  background-color:
-    rgba(255, 230, 0, 0.55);
-
-
-
-  border-radius:
-    4px;
-
-
-
-  box-shadow:
-    0 0 8px rgba(255,220,0,0.8);
-
-
-
+  background-color: rgba(255, 230, 0, 0.55);
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(255, 220, 0, 0.8);
 }
 
-/* Marca-texto da busca — cor diferente de .sentence.active
-   pra distinguir "frase sendo narrada" de "ocorrência
-   encontrada na busca", já que os dois podem, em tese,
-   existir ao mesmo tempo na mesma página */
-
 .sentence-search-match {
-
-  background-color:
-    rgba(0, 174, 255, 0.35);
-
-  border-radius:
-    4px;
-
-  box-shadow:
-    0 0 8px rgba(0, 174, 255, 0.7);
-
+  background-color: rgba(0, 174, 255, 0.35);
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(0, 174, 255, 0.7);
 }

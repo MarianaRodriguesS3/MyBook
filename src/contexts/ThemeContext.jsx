@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeContext = createContext();
-
 const STORAGE_KEY = "reader-theme";
 
 function getStoredTheme() {
@@ -26,16 +25,13 @@ export function ThemeProvider({ children }) {
 
   return (
     <ThemeContext.Provider
-      value={{
-        theme,
-        setTheme
-      }}
+      value={{ theme, setTheme }}
     >
       {children}
     </ThemeContext.Provider>
   );
 }
 
-export function useTheme(){
+export function useTheme() {
   return useContext(ThemeContext);
 }

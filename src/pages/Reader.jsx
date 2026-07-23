@@ -1,759 +1,252 @@
-import {
-  useEffect,
-  useRef,
-  useState
-} from "react";
-
+import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useReader } from "../contexts/ReaderContext";
-
 import ReaderBook from "../components/ReaderBook";
 import SpeechControl from "../components/SpeechControl";
 import FooterReader from "../components/FooterReader";
-
 import "./Reader.css";
 
-
-
 function Reader() {
-
-
-  const { t } =
-    useLanguage();
-
-
-  const { theme } =
-    useTheme();
-
-
-
-  const {
-
-    closeFile,
-
-    currentPage,
-    setCurrentPage,
-
-    totalPages,
-
-    mode,
-    setMode,
-
-    loadPage,
-    getPageContent,
-
-    goToPage,
-    searchText,
-    highlight,
-    setHighlight
-
-
-  } = useReader();
-
-
-
-
+  const { t } = useLanguage();
+  const { theme } = useTheme();
+  const { closeFile, currentPage, setCurrentPage, totalPages, mode, setMode, loadPage,
+    getPageContent, goToPage, searchText, highlight, setHighlight } = useReader();
 
   // controle visual da leitura
-  const [playing,setPlaying] =
-    useState(false);
-
-
+  const [playing, setPlaying] = useState(false);
 
   // página que está sendo narrada
-  const [readingPage,setReadingPage] =
-    useState(null);
-
-
+  const [readingPage, setReadingPage] = useState(null);
 
   // frase atual para destaque
-  const [activeSentence,setActiveSentence] =
-    useState(null);
+  const [activeSentence, setActiveSentence] = useState(null);
 
+  // referência para chamar métodos do SpeechControl diretamente (seekTo)
+  const speechControlRef = useRef(null);
 
+  const totalPagesRef = useRef(totalPages);
 
-  // referência para chamar métodos do
-  // SpeechControl diretamente (seekTo)
-  const speechControlRef =
-    useRef(null);
+  useEffect(() => { totalPagesRef.current = totalPages; }, [totalPages]);
 
+  // Carrega páginas visíveis
+  useEffect(() => {
 
+    if (mode === "landscape") {
+      loadPage(currentPage);
 
-
-  /*
-    totalPages "ao vivo" — usado dentro de
-
-    funções assíncronas (findAndReadNextPage),
-
-    já que a variável totalPages comum fica
-
-    congelada no valor de quando a função foi
-
-    criada, mesmo que o estado seja atualizado
-
-    depois (ex: PDF ainda carregando, totalPages
-
-    ainda é 0 no momento do clique em play).
-  */
-
-  const totalPagesRef =
-    useRef(totalPages);
-
-
-
-  useEffect(()=>{
-
-    totalPagesRef.current = totalPages;
-
-  },[totalPages]);
-
-
-
-
-
-
-
-
-  /*
-    Carrega páginas visíveis
-  */
-
-  useEffect(()=>{
-
-
-    if(mode==="landscape"){
-
-
-      loadPage(
-        currentPage
-      );
-
-
-
-      if(
-        currentPage + 1 <= totalPages
-      ){
-
-        loadPage(
-          currentPage + 1
-        );
-
+      if (currentPage + 1 <= totalPages) {
+        loadPage(currentPage + 1);
       }
 
-
-
-    }else{
-
-
-      loadPage(
-        currentPage
-      );
-
-
+    } else {
+      loadPage(currentPage);
     }
-
-
-  },[
+  }, [
     currentPage,
     mode,
     totalPages,
     loadPage
   ]);
 
+  async function findAndReadNextPage(startPage) {
 
+    console.log("PROCURANDO PÁGINA COM TEXTO A PARTIR DE:", startPage, "TOTAL:", totalPagesRef.current);
 
+    let waited = 0;
 
+    while (
+      totalPagesRef.current === 0 && waited < 5000
+    ) {
 
+      console.log("DOCUMENTO AINDA CARREGANDO, AGUARDANDO...");
 
-
-
-
-  /*
-    Procura, a partir de startPage, a próxima
-    página com texto, CARREGANDO cada candidata
-    antes de checar o conteúdo.
-
-    Se o documento ainda estiver carregando
-    (totalPagesRef.current === 0), espera um
-    pouco e tenta de novo antes de desistir.
-  */
-
-async function findAndReadNextPage(startPage){
-
-
-  console.log(
-    "PROCURANDO PÁGINA COM TEXTO A PARTIR DE:",
-    startPage,
-    "TOTAL:",
-    totalPagesRef.current
-  );
-
-
-
-  let waited = 0;
-
-
-  while(
-    totalPagesRef.current === 0 &&
-    waited < 5000
-  ){
-
-
-    console.log(
-      "DOCUMENTO AINDA CARREGANDO, AGUARDANDO..."
-    );
-
-
-
-    await new Promise(
-      resolve => setTimeout(resolve, 150)
-    );
-
-
-
-    waited += 150;
-
-
-  }
-
-
-
-  if(totalPagesRef.current === 0){
-
-    console.log(
-      "DOCUMENTO NÃO CARREGOU A TEMPO"
-    );
-
-    setPlaying(false);
-
-    return null;
-
-  }
-
-
-  let next =
-    startPage;
-
-
-
-  while(
-    next <= totalPagesRef.current
-  ){
-
-
-    console.log(
-      "TENTANDO CARREGAR PÁGINA:",
-      next
-    );
-
-
-
-    const content =
-      await loadPage(
-        next
+      await new Promise(
+        resolve => setTimeout(resolve, 150)
       );
 
-
-
-    console.log(
-      "CONTEÚDO DA PÁGINA:",
-      next,
-      content
-    );
-
-
-
-    if(
-      content &&
-      content.text &&
-      content.text.trim().length > 0
-    ){
-
-
-      console.log(
-        "PÁGINA COM TEXTO ENCONTRADA:",
-        next
-      );
-
-
-
-      setCurrentPage(
-        next
-      );
-
-
-      setReadingPage(
-        next
-      );
-
-
-      return next;
-
-
+      waited += 150;
     }
 
+    if (totalPagesRef.current === 0) {
+      console.log("DOCUMENTO NÃO CARREGOU A TEMPO");
 
+      setPlaying(false);
 
-    next++;
+      return null;
+    }
 
+    let next = startPage;
 
+    while (
+      next <= totalPagesRef.current
+    ) {
+
+      console.log("TENTANDO CARREGAR PÁGINA:", next);
+
+      const content = await loadPage(next);
+
+      console.log("CONTEÚDO DA PÁGINA:", next, content);
+
+      if (content && content.text && content.text.trim().length > 0) {
+
+        console.log("PÁGINA COM TEXTO ENCONTRADA:", next);
+
+        setCurrentPage(next);
+        setReadingPage(next);
+
+        return next;
+      }
+
+      next++;
+    }
+
+    console.log("NENHUMA PÁGINA COM TEXTO ENCONTRADA");
+
+    setPlaying(false);
+    return null;
   }
 
-
-
-  console.log(
-    "NENHUMA PÁGINA COM TEXTO ENCONTRADA"
-  );
-
-
-  setPlaying(false);
-
-
-  return null;
-
-
-}
-
-
-
-
-  /*
-    O botão de play chama diretamente
-
-    startReading(currentPage) dentro do
-
-    SpeechControl — não navega mais para
-
-    outra página. findAndReadNextPage
-
-    continua existindo só para o avanço
-
-    automático em handleFinishPage.
-  */
-
-
-
-
-
-
-  /*
-    Troca automática após leitura
-  */
-
-  async function handleFinishPage(pageNumber){
-
-
+  async function handleFinishPage(pageNumber) {
 
     setActiveSentence(null);
 
-
-
-
-
-    /*
-      Modo uma página
-
-      procura próxima página
-      com texto
-    */
-
-    if(mode==="portrait"){
-
-
-
+    if (mode === "portrait") {
       await findAndReadNextPage(
         pageNumber + 1
       );
 
-
-
       return;
-
-
     }
 
+    if (pageNumber === currentPage && currentPage + 1 <= totalPages) {
 
+      const rightContent = await loadPage(currentPage + 1);
 
+      if (rightContent && rightContent.text && rightContent.text.trim()) {
 
-
-    /*
-      Modo duas páginas
-
-      esquerda → direita
-
-      depois próximo par
-    */
-
-
-
-    if(
-      pageNumber === currentPage
-      &&
-      currentPage + 1 <= totalPages
-    ){
-
-
-      const rightContent =
-        await loadPage(
-          currentPage + 1
-        );
-
-
-
-      if(
-        rightContent &&
-        rightContent.text &&
-        rightContent.text.trim()
-      ){
-
-
-        setReadingPage(
-          currentPage + 1
-        );
-
+        setReadingPage(currentPage + 1);
 
         return;
-
-
       }
-
-
     }
 
+    const nextPair = currentPage + 2;
 
+    if (nextPair <= totalPages) {
 
+      const content = await loadPage(nextPair);
 
+      if (content && content.text && content.text.trim()) {
 
-
-
-    const nextPair =
-      currentPage + 2;
-
-
-
-    if(
-      nextPair <= totalPages
-    ){
-
-
-      const content =
-        await loadPage(
-          nextPair
-        );
-
-
-
-      if(
-        content &&
-        content.text &&
-        content.text.trim()
-      ){
-
-
-        setCurrentPage(
-          nextPair
-        );
-
-
-        setReadingPage(
-          nextPair
-        );
-
-
+        setCurrentPage(nextPair);
+        setReadingPage(nextPair);
 
         return;
-
       }
 
-
-
-      // par sem texto: procura a próxima
-      // página válida a partir daqui
-
-      await findAndReadNextPage(
-        nextPair + 1
-      );
-
-
+      await findAndReadNextPage(nextPair + 1);
 
       return;
-
-
     }
-
-
-
 
     setPlaying(false);
-
-
   }
 
+  function handleSentenceClick(pageNumber, sentenceIndex) {
 
-
-
-
-
-
-
-
-  /*
-    Clique numa frase do texto: só faz
-
-    efeito se o áudio estiver pausado
-
-    (o próprio ReaderBook já só deixa
-
-    clicar nesse caso, mas confere de
-
-    novo aqui por segurança). Manda o
-
-    SpeechControl começar a ler exatamente
-
-    a partir da frase clicada.
-  */
-
-  function handleSentenceClick(pageNumber, sentenceIndex){
-
-
-    if(playing){
+    if (playing) {
 
       return;
-
     }
-
-
 
     speechControlRef.current?.seekTo(
-
       pageNumber,
-
       sentenceIndex
-
     );
-
-
   }
 
-
-
-
-  function toggleMode(){
-
-
+  function toggleMode() {
     setMode(
-
-      mode === "landscape"
-
-        ? "portrait"
-
-        : "landscape"
-
+      mode === "landscape" ? "portrait" : "landscape"
     );
-
-
   }
 
-
-
-
-
-
-
-
-
-  function previousPage(){
-
-
+  function previousPage() {
     setActiveSentence(null);
 
+    const step = mode === "landscape" ? 2 : 1;
 
-    const step =
-      mode === "landscape"
-        ? 2
-        : 1;
+    if (currentPage > 1) {
+      setCurrentPage(Math.max(1, currentPage - step)
+      );
+    }
+  }
 
+  function nextPage() {
+    setActiveSentence(null);
 
-    if(currentPage > 1){
+    const step = mode === "landscape" ? 2 : 1;
 
+    if (currentPage < totalPages) {
 
       setCurrentPage(
-        Math.max(
-          1,
-          currentPage - step
-        )
+        Math.min(totalPages, currentPage + step)
       );
-
-
     }
-
-
   }
 
-
-
-
-
-
-
-
-  function nextPage(){
-
+  function handleSearchResultSelect(result) {
 
     setActiveSentence(null);
 
-
-    const step =
-      mode === "landscape"
-        ? 2
-        : 1;
-
-
-    if(
-      currentPage < totalPages
-    ){
-
-
-      setCurrentPage(
-        Math.min(
-          totalPages,
-          currentPage + step
-        )
-      );
-
-
-    }
-
-
-  }
-
-
-
-
-
-
-
-
-  /*
-    Resultado da busca selecionado (único
-    resultado automático ou item clicado na
-    lista): navega até a página e guarda a
-    ocorrência em `highlight` (ReaderContext)
-    para o ReaderBook destacar o trecho.
-
-    Limpa activeSentence pra não misturar o
-    destaque da busca com o destaque de leitura
-    em voz alta.
-  */
-
-  function handleSearchResultSelect(result){
-
-
-    setActiveSentence(null);
-
-    /*
-      Resultado do tipo "page" (número de página
-      digitado direto) não tem ocorrência de texto
-      associada — só navega, sem destacar nada.
-    */
-
-    if(result.kind === "page"){
+    if (result.kind === "page") {
 
       setHighlight(null);
 
-    }else{
+    } else {
 
       setHighlight({
         page: result.page,
         charIndex: result.charIndex,
         length: result.length
       });
-
     }
 
     goToPage(
       result.page
     );
-
-
   }
-
-
-
-
-
-
-
-
 
   return (
-
-    <div
-      className={`reader theme-${theme}`}
-    >
-
-
+    <div className={`reader theme-${theme}`}>
       <ReaderBook
-
         mode={mode}
-
         currentPage={currentPage}
-
         totalPages={totalPages}
-
         getPageContent={getPageContent}
-
-        loadingLabel={
-          t("loadingPage")
-        }
-
+        loadingLabel={t("loadingPage")}
         readingPage={readingPage}
-
         activeSentence={activeSentence}
-
         playing={playing}
-
         onSentenceClick={handleSentenceClick}
-
         searchHighlight={highlight}
-
       />
 
-
-
-
-
-
-<SpeechControl
-
-  ref={speechControlRef}
-
-  currentPage={currentPage}
-
-  getPageContent={getPageContent}
-
-  loadPage={loadPage}
-
-  mode={mode}
-
-  totalPages={totalPages}
-
-  playing={playing}
-
-  setPlaying={setPlaying}
-
-  readingPage={readingPage}
-
-  setReadingPage={setReadingPage}
-
-  setActiveSentence={setActiveSentence}
-
-  onFinishPage={
-    handleFinishPage
-  }
-
-/>
+      <SpeechControl
+        ref={speechControlRef}
+        currentPage={currentPage}
+        getPageContent={getPageContent}
+        loadPage={loadPage}
+        mode={mode}
+        totalPages={totalPages}
+        playing={playing}
+        setPlaying={setPlaying}
+        readingPage={readingPage}
+        setReadingPage={setReadingPage}
+        setActiveSentence={setActiveSentence}
+        onFinishPage={handleFinishPage}
+      />
 
 
 
@@ -773,7 +266,7 @@ async function findAndReadNextPage(startPage){
 
         nextPage={nextPage}
 
-        toggleSpeech={()=>{
+        toggleSpeech={() => {
           document
             .dispatchEvent(
               new Event(
