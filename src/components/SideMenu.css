@@ -2,7 +2,7 @@
   position:fixed;
   top:0;
   left:0;
-  width:330px;
+  width: var(--menu-width);
   height:100vh;
   background-color:var(--surface);
   color:var(--text);
@@ -87,7 +87,6 @@
 /* Tablets */
 @media (max-width: 992px) {
   .side-menu {
-    width: 300px;
     padding: 18px;
   }
 
@@ -122,8 +121,6 @@
 /* Celulares */
 @media (max-width: 768px) {
   .side-menu {
-    width: 85%;
-    max-width: 320px;
     padding: 16px;
   }
 
@@ -160,8 +157,6 @@
 /* Celulares pequenos */
 @media (max-width: 480px) {
   .side-menu {
-    width: 100%;
-    max-width: none;
     padding: 14px;
   }
 

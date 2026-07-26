@@ -158,6 +158,17 @@
     display: none;
   }
 
+  /*
+    Antes, dar width:100% pras duas .page (landscape)
+    só fazia elas encolherem igualmente por flexbox —
+    virava 2 colunas de ~50%, apertadas, não 1 coluna
+    cheia como o objetivo era. Escondendo a da direita
+    de vez, a esquerda fica sozinha e usa a largura toda.
+  */
+  .right-page {
+    display: none;
+  }
+
   .page-text {
     line-height: 1.5;
   }

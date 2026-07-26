@@ -1,6 +1,20 @@
 .history {
+  flex: 1;
+  min-height: 0;
   padding: 40px 50px;
   color: var(--text);
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Firefox: barra sempre invisível */
+  scrollbar-width: none;
+}
+
+/* Chrome/Safari/Edge: mesma ideia — remove a barra do layout,
+   sem afetar a rolagem em si (scroll continua funcionando
+   normalmente por mouse, trackpad, roda ou toque) */
+.history::-webkit-scrollbar {
+  display: none;
 }
 
 .history h2 {
@@ -10,7 +24,6 @@
 }
 
 .history-content {
-  min-height: 200px;
   padding: 30px;
   border-radius: 12px;
   background: var(--surface);
@@ -72,29 +85,19 @@
     padding: 30px;
   }
 
-  .history h2 {
-    font-size: 28px;
-    margin-bottom: 24px;
-  }
-
-  .history-content {
-    padding: 24px;
-  }
-
-  .history-content p {
-    font-size: 18px;
-  }
-
   .history-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 18px;
   }
+
 }
 
 /* Celulares */
 @media (max-width: 768px) {
   .history {
     padding: 20px 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .history h2 {
@@ -105,23 +108,15 @@
 
   .history-content {
     padding: 18px;
-    min-height: auto;
-  }
-
-  .history-content p {
-    font-size: 16px;
-    text-align: center;
   }
 
   .history-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
-  }
-
-  .history-name {
-    font-size: 13px;
+    padding-bottom: 30px;
   }
 }
+
 
 /* Celulares pequenos */
 @media (max-width: 480px) {
@@ -129,20 +124,12 @@
     padding: 16px 12px;
   }
 
-  .history h2 {
-    font-size: 22px;
-  }
-
-  .history-content {
-    padding: 16px;
-  }
-
   .history-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
 
-  .history-name {
-    font-size: 12px;
+  .history-thumbnail {
+    width: 100%;
   }
 }

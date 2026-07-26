@@ -1,5 +1,16 @@
 .app {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/*
+  Fonte única da largura do menu lateral — o SideMenu.css
+  lê a mesma variável pro width dele. Assim, o quanto o
+  conteúdo é empurrado (aqui) e o quanto o menu realmente
+  ocupa (lá) NUNCA saem de sincronia, em nenhum breakpoint.
+*/
+:root {
+  --menu-width: 330px;
 }
 
 /* Temas */
@@ -54,44 +65,64 @@
 }
 
 .content {
-  min-height:100vh;
-  transition:margin-left .3s;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left .3s;
   background: var(--background);
   color: var(--text);
 }
 
 .content.menu-open {
-  margin-left:330px;
+  margin-left: var(--menu-width);
 }
 
 /*RESPONSIVIDADE*/
 
 /* Tablets */
 @media (max-width: 992px) {
-  .content.menu-open {
-    margin-left: 300px;
+  :root {
+    --menu-width: 300px;
   }
 }
 
 /* Celulares */
 @media (max-width: 768px) {
-  .app, .content {
-    min-height: 100dvh;
+  /* dvh em vez de vh: em mobile, vh conta a altura
+     total da tela (inclui a área que a barra de
+     endereço do navegador ocupa/libera ao rolar),
+     então .app podia ficar maior que o espaço visível
+     de fato — dvh acompanha o viewport real. */
+  .app {
+    height: 100dvh;
   }
 
-  /* O menu deixa de empurrar o conteúdo */
-  .content.menu-open {
-    margin-left: 0;
+  /*
+    Mesma largura que o SideMenu usa aqui (85% da tela,
+    até um máximo de 320px) — empurrando exatamente essa
+    quantidade, o header/history que ainda aparecem ficam
+    inteiros e centralizados no espaço restante, em vez de
+    espremidos atrás do menu.
+  */
+  :root {
+    --menu-width: min(85vw, 320px);
   }
 }
 
 /* Celulares pequenos */
 @media (max-width: 480px) {
-  .app, .content {
-    min-height: 100dvh;
+  .app {
+    height: 100dvh;
   }
 
-  .content.menu-open {
-    margin-left: 0;
+  /*
+    Menu ocupa a tela toda aqui — empurrar o conteúdo por
+    100% da largura tem o mesmo efeito visual de escondê-lo
+    atrás do menu (que era o comportamento que você gostou),
+    só que agora pelo mesmo mecanismo usado nos outros tamanhos.
+  */
+  :root {
+    --menu-width: 100vw;
   }
 }

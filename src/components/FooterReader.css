@@ -1,9 +1,10 @@
 .reader-footer {
   flex: 0 0 90px;
   height: 90px;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   padding: 0 20px;
   background: var(--surface);
   border-top: 1px solid var(--border);
@@ -11,7 +12,8 @@
 
 .footer-left {
   display: flex;
-  justify-content: flex-start;
+  align-items: center;
+  flex: 0 0 auto;
   padding-left: 30px;
 }
 
@@ -19,12 +21,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 25px;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 14px;
 }
 
 .footer-right {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  flex: 0 0 auto;
   padding-right: 30px;
 }
 
@@ -35,6 +40,7 @@
   border: none;
   color: var(--text);
   cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .footer-button {
@@ -45,14 +51,25 @@
   font-size: 36px;
 }
 
+/* A caixa de busca é a única coisa que encolhe quando
+   falta espaço — tudo o mais (ícones, contador) mantém
+   o tamanho e nunca quebra linha. */
+.search-box-wrapper {
+  position: relative;
+  flex: 0 1 300px;
+  min-width: 60px;
+}
+
 .search-box {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
 }
 
 .search-box input {
-  width: 300px;
+  width: 100%;
+  min-width: 0;
   height: 50px;
   padding: 0 15px;
   border-radius: 10px;
@@ -68,10 +85,12 @@
 }
 
 .page-counter {
-  min-width: 90px;
+  flex: 0 0 auto;
+  min-width: 60px;
   text-align: center;
   font-size: 22px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .reader-footer button:disabled {
@@ -88,6 +107,7 @@
 .play-button-wrapper {
   position: relative;
   display: inline-flex;
+  flex: 0 0 auto;
 }
 
 .play-disabled-icon {
@@ -116,10 +136,6 @@
 }
 
 /* Busca — dropdown de resultados */
-
-.search-box-wrapper {
-  position: relative;
-}
 
 .search-box-error {
   animation: search-box-shake 0.3s ease-in-out;
@@ -174,34 +190,28 @@
   line-height: 1.3;
 }
 
-/* RESPONSIVIDADE */
+/* RESPONSIVIDADE — só encolhe, nunca empilha em bloco */
 
 /* Tablets */
 @media (max-width: 992px) {
   .reader-footer {
-    height: auto;
-    min-height: 90px;
-    grid-template-columns: 1fr;
-    gap: 15px;
-    padding: 15px;
-  }
-
-  .footer-left,
-  .footer-center,
-  .footer-right {
-    justify-content: center;
-    padding: 0;
+    padding: 0 14px;
+    gap: 8px;
   }
 
   .footer-center {
-    flex-wrap: wrap;
-    gap: 18px;
+    gap: 10px;
+  }
+
+  .search-box-wrapper {
+    flex-basis: 200px;
+    min-width: 50px;
   }
 
   .search-box input {
-    width: 220px;
     height: 45px;
     font-size: 16px;
+    padding: 0 12px;
   }
 
   .footer-button {
@@ -218,7 +228,7 @@
 
   .page-counter {
     font-size: 20px;
-    min-width: 70px;
+    min-width: 50px;
   }
 
   .speech-disabled-toast {
@@ -231,40 +241,27 @@
 /* Celulares */
 @media (max-width: 768px) {
   .reader-footer {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 12px;
-  }
-
-  .footer-left,
-  .footer-center,
-  .footer-right {
-    width: 100%;
-    justify-content: center;
-    padding: 0;
+    padding: 0 10px;
+    gap: 6px;
   }
 
   .footer-center {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .search-box {
-    width: 100%;
-    justify-content: center;
+    gap: 8px;
   }
 
   .search-box-wrapper {
-    width: 100%;
-    max-width: 420px;
+    flex-basis: 120px;
+    min-width: 44px;
+  }
+
+  .search-box {
+    gap: 4px;
   }
 
   .search-box input {
-    width: 100%;
-    height: 44px;
-    font-size: 16px;
+    height: 40px;
+    font-size: 15px;
+    padding: 0 10px;
   }
 
   .search-button {
@@ -273,16 +270,16 @@
   }
 
   .footer-button {
-    font-size: 30px;
-  }
-
-  .play-button {
     font-size: 28px;
   }
 
+  .play-button {
+    font-size: 26px;
+  }
+
   .page-counter {
-    min-width: auto;
-    font-size: 18px;
+    min-width: 44px;
+    font-size: 16px;
   }
 
   .search-results-list {
@@ -290,7 +287,7 @@
   }
 
   .speech-disabled-toast {
-    max-width: 200px;
+    max-width: 180px;
     white-space: normal;
     text-align: center;
     font-size: 12px;
@@ -300,34 +297,41 @@
 /* Celulares pequenos */
 @media (max-width: 480px) {
   .reader-footer {
-    padding: 10px;
-    gap: 10px;
+    padding: 0 6px;
+    gap: 4px;
   }
 
   .footer-center {
-    gap: 10px;
+    gap: 5px;
   }
 
-  .footer-button {
-    font-size: 26px;
-  }
-
-  .play-button {
-    font-size: 24px;
-  }
-
-  .search-button {
-    font-size: 22px;
+  .search-box-wrapper {
+    flex-basis: 70px;
+    min-width: 36px;
   }
 
   .search-box input {
-    height: 40px;
-    font-size: 15px;
-    padding: 0 12px;
+    height: 36px;
+    font-size: 14px;
+    padding: 0 8px;
+  }
+
+  .footer-button {
+    font-size: 22px;
+  }
+
+  .play-button {
+    font-size: 20px;
+  }
+
+  .search-button {
+    font-size: 19px;
+    margin-left: 2px;
   }
 
   .page-counter {
-    font-size: 16px;
+    font-size: 13px;
+    min-width: 34px;
   }
 
   .search-result-page {
