@@ -44,6 +44,7 @@
 .page-fit {
   width: 100%;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -58,7 +59,8 @@
 
 .page-text {
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   margin: 0;
   white-space: pre-wrap;
   line-height: 1.35;
@@ -151,26 +153,15 @@
   }
 
   .page {
-    padding: 16px;
+    padding: 12px;
   }
 
   .page-divider {
     display: none;
   }
 
-  /*
-    Antes, dar width:100% pras duas .page (landscape)
-    só fazia elas encolherem igualmente por flexbox —
-    virava 2 colunas de ~50%, apertadas, não 1 coluna
-    cheia como o objetivo era. Escondendo a da direita
-    de vez, a esquerda fica sozinha e usa a largura toda.
-  */
-  .right-page {
-    display: none;
-  }
-
   .page-text {
-    line-height: 1.5;
+    line-height: 1.45;
   }
 
   .page-image {
