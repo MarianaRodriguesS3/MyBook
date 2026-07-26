@@ -11,3 +11,30 @@
 .search-button:hover {
   transform: scale(1.1);
 }
+
+/*RESPONSIVIDADE*/
+
+/* Tablets */
+@media (max-width: 992px) {
+
+  .search-button {
+    font-size: 24px;
+  }
+
+}
+
+/* Celulares */
+@media (max-width: 768px) {
+
+  .search-button {
+    font-size: 22px;
+  }
+
+}
+
+/* Celulares pequenos */
+@media (max-width: 480px) {
+  .search-button {
+    font-size: 20px;
+  }
+}

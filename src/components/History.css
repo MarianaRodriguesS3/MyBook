@@ -63,3 +63,86 @@
   text-overflow: ellipsis;
   width: 100%;
 }
+
+/* RESPONSIVIDADE*/
+
+/* Tablets */
+@media (max-width: 992px) {
+  .history {
+    padding: 30px;
+  }
+
+  .history h2 {
+    font-size: 28px;
+    margin-bottom: 24px;
+  }
+
+  .history-content {
+    padding: 24px;
+  }
+
+  .history-content p {
+    font-size: 18px;
+  }
+
+  .history-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 18px;
+  }
+}
+
+/* Celulares */
+@media (max-width: 768px) {
+  .history {
+    padding: 20px 16px;
+  }
+
+  .history h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .history-content {
+    padding: 18px;
+    min-height: auto;
+  }
+
+  .history-content p {
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .history-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .history-name {
+    font-size: 13px;
+  }
+}
+
+/* Celulares pequenos */
+@media (max-width: 480px) {
+  .history {
+    padding: 16px 12px;
+  }
+
+  .history h2 {
+    font-size: 22px;
+  }
+
+  .history-content {
+    padding: 16px;
+  }
+
+  .history-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .history-name {
+    font-size: 12px;
+  }
+}

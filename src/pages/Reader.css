@@ -102,3 +102,95 @@
   border-radius: 4px;
   box-shadow: 0 0 8px rgba(0, 174, 255, 0.7);
 }
+
+/*RESPONSIVIDADE*/
+
+/* Tablets */
+@media (max-width: 992px) {
+  .page {
+    padding: 20px;
+  }
+
+  .landscape .page {
+    width: 50%;
+  }
+
+  .single-page {
+    width: 100%;
+    height: 100%;
+  }
+
+  .page-divider {
+    height: 85%;
+  }
+
+  .page-image {
+    max-height: 35%;
+  }
+
+  .page-loading {
+    font-size: 20px;
+  }
+}
+
+/* Celulares */
+@media (max-width: 768px) {
+  .reader {
+    height: 100dvh;
+  }
+
+  .book-area {
+    padding: 8px;
+  }
+
+  /* Em celulares sempre exibe apenas uma página */
+  .landscape .page,
+  .single-page {
+    width: 100%;
+    height: 100%;
+  }
+
+  .page {
+    padding: 16px;
+  }
+
+  .page-divider {
+    display: none;
+  }
+
+  .page-text {
+    line-height: 1.5;
+  }
+
+  .page-image {
+    max-height: 30%;
+  }
+
+  .page-loading {
+    font-size: 18px;
+  }
+
+}
+
+/* Celulares pequenos */
+@media (max-width: 480px) {
+  .book-area {
+    padding: 4px;
+  }
+
+  .page {
+    padding: 12px;
+  }
+
+  .page-text {
+    line-height: 1.55;
+  }
+
+  .page-image {
+    max-height: 28%;
+  }
+
+  .page-loading {
+    font-size: 16px;
+  }
+}

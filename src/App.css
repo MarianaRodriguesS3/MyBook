@@ -1,19 +1,15 @@
 .app {
   min-height: 100vh;
-  --background: white;
-  --text: black;
-  --surface: white;
-  --border: #ddd;
 }
 
 /* Temas */
 .theme-dia {
-  --background: #ffffff;
+  --background: #fbf5e6;
   --text: #000000;
-  --surface: #ffffff;
-  --border: #dddddd;
-  --button-active: #1976d2;
-  --button-inactive: #dddddd;
+  --surface: #efe2c2;
+  --border: #d8c8a8;
+  --button-active: #704214;
+  --button-inactive: #d8c3a5;
   --danger: #d00000;
 }
 
@@ -66,4 +62,36 @@
 
 .content.menu-open {
   margin-left:330px;
+}
+
+/*RESPONSIVIDADE*/
+
+/* Tablets */
+@media (max-width: 992px) {
+  .content.menu-open {
+    margin-left: 300px;
+  }
+}
+
+/* Celulares */
+@media (max-width: 768px) {
+  .app, .content {
+    min-height: 100dvh;
+  }
+
+  /* O menu deixa de empurrar o conteúdo */
+  .content.menu-open {
+    margin-left: 0;
+  }
+}
+
+/* Celulares pequenos */
+@media (max-width: 480px) {
+  .app, .content {
+    min-height: 100dvh;
+  }
+
+  .content.menu-open {
+    margin-left: 0;
+  }
 }
