@@ -278,7 +278,7 @@ Sempre que o usuário navegar entre páginas deverá ocorrer:
 4. O leitor é aberto.
 5. O usuário escolhe entre modo retrato ou paisagem.
 6. O texto é exibido normalmente.
-7. Caso a fala esteja ativada, o conteúdo textual da página é lido automaticamente.
+7. Caso a fala esteja ativada, o usuário tem a opção do conteúdo textual da página ser lido em voz alta.
 8. O usuário pode navegar entre páginas utilizando os controles inferiores.
 9. A cada mudança de página ocorre a animação e o efeito sonoro de folha sendo virada.
 10. O usuário pode retornar à página inicial utilizando a seta localizada no topo da tela.
