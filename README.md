@@ -283,6 +283,11 @@ Sempre que o usuário navegar entre páginas deverá ocorrer:
 9. A cada mudança de página ocorre a animação e o efeito sonoro de folha sendo virada.
 10. O usuário pode retornar à página inicial utilizando a seta localizada no topo da tela.
 
+# PWA (Progressive Web App).
+
+- Usado para tornar o app instalavel
+- Configuração dos arquivos vite.config.js e index.html para usala-lo.
+
 # Feito
 
 - Continuar com as configurações do audio para que ele mude automaticamente para a proxima pagina que contenha texto.
