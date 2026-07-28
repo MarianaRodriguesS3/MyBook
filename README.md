@@ -300,9 +300,13 @@ Quando desativada: Desabilitado 🔇
 - Mudar o icone da lupa: Lendo Agora 🔍
 - Corrigir a exibição das paginas no modo deitado sempre mostrar nomero impar 1/5 3/5...
 - Guardar tema, idioma e pagina 
+- limpar histórico de navegação
 
 
 # Falta fazer
 
 - Efeito sonoro e visual de Troca de Página
+- Ajustar menuFooter em telas menores
+- Ajustar som automatico ao clicar no texto
+- Ajustar tamanho da imagem dentro do pdf em telas menores
 

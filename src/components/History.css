@@ -42,6 +42,7 @@
 }
 
 .history-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -53,10 +54,59 @@
   padding: 8px;
   border-radius: 8px;
   transition: background .2s;
+  z-index: 6;
 }
 
 .history-item:hover {
   background: var(--background);
+}
+
+.history-open {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text);
+    padding: 8px;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.delete-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    background: transparent;
+}
+
+.delete-button {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 10;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #555;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.delete-button:hover {
+    background: rgba(255, 255, 255, 0.45);
+    color: #d32f2f;
+    transform: scale(1.1);
 }
 
 .history-thumbnail {

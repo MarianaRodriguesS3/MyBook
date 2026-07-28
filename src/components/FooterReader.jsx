@@ -23,6 +23,33 @@ function PlayDisabledIcon() {
   );
 }
 
+/*
+  true em telas <= breakpoint (tablet/celular — comportamento de
+  "recolher" a busca), false em telas maiores (PC — tudo visível
+  o tempo todo). Usa matchMedia (reativo a resize/rotação) em vez
+  de só ler o tamanho uma vez no mount.
+*/
+function useIsCompact(breakpoint = 992) {
+  const [isCompact, setIsCompact] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia(`(max-width: ${breakpoint}px)`).matches
+      : false
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint}px)`);
+
+    function handleChange(event) {
+      setIsCompact(event.matches);
+    }
+
+    mql.addEventListener("change", handleChange);
+    return () => mql.removeEventListener("change", handleChange);
+  }, [breakpoint]);
+
+  return isCompact;
+}
+
 function FooterReader({
   currentPage,
   totalPages,
@@ -39,20 +66,38 @@ function FooterReader({
 }) {
   const { t } = useLanguage();
   const { speech } = useSpeech();
-
-  // mensagem temporária "habilite o modo fala..."
   const [showSpeechNotice, setShowSpeechNotice] = useState(false);
-
   const noticeTimeoutRef = useRef(null);
-
-  // estado da busca
   const [searchQuery, setSearchQuery] = useState("");
   const [searchError, setSearchError] = useState(false);
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef(null);
 
   const errorTimeoutRef = useRef(null);
   const searchBoxRef = useRef(null);
+
+  // telas médias/pequenas (tablet, celular) recolhem a busca;
+  // telas grandes (PC) mostram tudo junto o tempo todo
+  const isCompact = useIsCompact(992);
+
+  // ao voltar pra PC com a busca "aberta" de quando era mobile,
+  // reseta — em telas grandes esse estado não controla nada, mas
+  // evita reabrir "sujo" se a pessoa apertar a tela de novo
+  useEffect(() => {
+    if (!isCompact) {
+      setSearchOpen(false);
+    }
+  }, [isCompact]);
+
+  // nas telas grandes o input já fica sempre visível; nas compactas,
+  // só quando searchOpen for true (depois de tocar na lupa)
+  const showInputInline = !isCompact || searchOpen;
+
+  // nas telas grandes os outros ícones nunca somem; nas compactas,
+  // somem quando a busca está aberta
+  const showOtherButtons = !isCompact || !searchOpen;
 
   useEffect(() => {
     return () => {
@@ -67,17 +112,50 @@ function FooterReader({
 
   // fecha a lista de resultados ao clicar fora da caixa de pesquisa
   useEffect(() => {
+
     function handleClickOutside(event) {
+
       if (
         searchBoxRef.current &&
         !searchBoxRef.current.contains(event.target)
       ) {
+
         setResults([]);
+
+        setSearchOpen(false);
+
       }
+
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+
   }, []);
+
+  useEffect(() => {
+
+    if (
+      searchOpen &&
+      searchInputRef.current
+    ) {
+
+      searchInputRef.current.focus();
+
+    }
+
+  }, [searchOpen]);
 
   function handlePlayClick() {
     if (!speech) {
@@ -158,6 +236,19 @@ function FooterReader({
     }
   }
 
+  function handleSearchButtonClick() {
+
+    // no compacto, o primeiro toque só abre o campo;
+    // no PC, o campo já está aberto — sempre busca direto
+    if (isCompact && !searchOpen) {
+      setSearchOpen(true);
+      return;
+    }
+
+    runSearch();
+
+  }
+
   return (
     <footer className="reader-footer">
       <div className="footer-left">
@@ -171,102 +262,164 @@ function FooterReader({
         </button>
       </div>
 
-      <div className="footer-center">
-        {/* Página anterior */}
-        <button
-          className="footer-button"
-          onClick={previousPage}
-          disabled={currentPage <= 1}
-          title={t("previousPage")}
-        >
-          ‹
-        </button>
+      <div className={`footer-center ${searchOpen && isCompact ? "search-active" : ""}`}>
 
-        {/* Play / Pause */}
-        <div className="play-button-wrapper">
-          <button
-            className={`play-button ${!speech ? "play-button-disabled" : ""}`}
-            onClick={handlePlayClick}
-            title={
-              !speech
-                ? t("speechDisabledTitle")
-                : (playing ? t("pause") : t("play"))
-            }
-          >
-            {!speech ? <PlayDisabledIcon /> : (playing ? "⏸" : "▶")}
-          </button>
+        {showOtherButtons && (
+          <>
+            {/* Página anterior */}
+            <button
+              className="footer-button"
+              onClick={previousPage}
+              disabled={currentPage <= 1}
+              title={t("previousPage")}
+            >
+              ‹
+            </button>
 
-          {showSpeechNotice && (
-            <div className="speech-disabled-toast">
-              {t("enableSpeechInSettings")}
+
+            {/* Play / Pause */}
+            <div className="play-button-wrapper">
+
+              <button
+                className={`play-button ${!speech ? "play-button-disabled" : ""
+                  }`}
+                onClick={handlePlayClick}
+                title={
+                  !speech
+                    ? t("speechDisabledTitle")
+                    : (playing
+                      ? t("pause")
+                      : t("play"))
+                }
+              >
+                {!speech
+                  ? <PlayDisabledIcon />
+                  : (playing ? "⏸" : "▶")
+                }
+
+              </button>
+
+
+              {showSpeechNotice && (
+                <div className="speech-disabled-toast">
+                  {t("enableSpeechInSettings")}
+                </div>
+              )}
+
             </div>
-          )}
-        </div>
+          </>
+        )}
+
+
 
         {/* Pesquisa */}
-        <div className="search-box-wrapper" ref={searchBoxRef}>
-          <div className={`search-box ${searchError ? "search-box-error" : ""}`}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              onKeyDown={handleSearchKeyDown}
-              placeholder={t("searchPlaceholder")}
-              disabled={searching}
-            />
+        <div
+          className="search-box-wrapper"
+          ref={searchBoxRef}
+        >
+
+          <div
+            className={`
+                search-box
+                ${searchError ? "search-box-error" : ""}
+                ${showInputInline ? "search-open" : ""}
+            `}
+          >
+
+            {showInputInline && (
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onKeyDown={handleSearchKeyDown}
+                placeholder={t("searchPlaceholder")}
+                disabled={searching}
+              />
+            )}
+
 
             <button
               className="search-button"
-              onClick={runSearch}
+              onClick={handleSearchButtonClick}
               title={t("search")}
               disabled={searching}
             >
-              {searching ? "…" : <SearchIcon />}
+
+              {searching
+                ? "…"
+                : <SearchIcon />
+              }
+
             </button>
+
           </div>
 
+
+
           {results.length > 0 && (
+
             <ul className="search-results-list">
+
               {results.map((result, i) => (
+
                 <li
                   key={`${result.kind}-${result.page}-${result.charIndex ?? "page"}-${i}`}
                   className="search-result-item"
                   onClick={() => selectResult(result)}
                 >
+
                   <span className="search-result-page">
                     {t("page")} {result.page}
                   </span>
+
+
                   {result.kind === "text" && (
                     <span className="search-result-snippet">
                       {result.snippet}
                     </span>
                   )}
+
                 </li>
+
               ))}
+
             </ul>
+
           )}
+
         </div>
 
-        {/* Contador */}
-        <span className="page-counter">
-          {currentPage} / {totalPages || "--"}
-        </span>
 
-        {/* Próxima página */}
-        <button
-          className="footer-button"
-          onClick={nextPage}
-          disabled={
-            mode === "landscape"
-              ? currentPage + 2 > totalPages
-              : currentPage >= totalPages
-          }
-          title={t("nextPage")}
-        >
-          ›
-        </button>
+
+        {showOtherButtons && (
+          <>
+
+            {/* Contador */}
+            <span className="page-counter">
+              {currentPage} / {totalPages || "--"}
+            </span>
+
+
+
+            {/* Próxima página */}
+            <button
+              className="footer-button"
+              onClick={nextPage}
+              disabled={
+                mode === "landscape"
+                  ? currentPage + 2 > totalPages
+                  : currentPage >= totalPages
+              }
+              title={t("nextPage")}
+            >
+              ›
+            </button>
+
+          </>
+        )}
+
       </div>
-
       <div className="footer-right">
         {/* Alternar modo */}
         <button

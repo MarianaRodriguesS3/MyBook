@@ -1,20 +1,23 @@
+/* --- ESTRUTURA PRINCIPAL (Aparência de Tab Bar de App) --- */
 .reader-footer {
-  flex: 0 0 90px;
-  height: 90px;
+  flex: 0 0 70px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 0 20px;
+  padding: 0 16px;
   background: var(--surface);
   border-top: 1px solid var(--border);
+  box-sizing: border-box;
+  position: relative;
+  user-select: none;
 }
 
-.footer-left {
+.footer-left,
+.footer-right {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  padding-left: 30px;
 }
 
 .footer-center {
@@ -22,120 +25,186 @@
   align-items: center;
   justify-content: center;
   flex: 1 1 auto;
-  min-width: 0;
-  gap: 14px;
+  gap: 12px;
+  height: 100%;
+  min-width: 0; /* Previne overflow em flexbox */
 }
 
-.footer-right {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  padding-right: 30px;
-}
-
+/* Botões com efeito Feedback Tátil (Estilo App Mobile) */
 .footer-button,
 .play-button,
 .search-button {
-  background: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
+  border-radius: 50%;
   color: var(--text);
   cursor: pointer;
   flex: 0 0 auto;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.footer-button {
-  font-size: 38px;
+.footer-button:active,
+.play-button:active,
+.search-button:active {
+  transform: scale(0.92);
+  background: rgba(120, 120, 120, 0.2);
 }
 
-.play-button {
-  font-size: 36px;
-}
+.footer-button { font-size: 24px; }
+.play-button { font-size: 22px; }
 
-/* A caixa de busca é a única coisa que encolhe quando
-   falta espaço — tudo o mais (ícones, contador) mantém
-   o tamanho e nunca quebra linha. */
-.search-box-wrapper {
-  position: relative;
-  flex: 0 1 300px;
-  min-width: 60px;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.search-box input {
-  width: 100%;
-  min-width: 0;
-  height: 50px;
-  padding: 0 15px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--background);
-  color: var(--text);
-  font-size: 18px;
-}
-
-.search-button {
-  font-size: 30px;
-  margin-left: 8px;
-}
-
+/* Contador Clean */
 .page-counter {
   flex: 0 0 auto;
-  min-width: 60px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(120, 120, 120, 0.1);
   text-align: center;
-  font-size: 22px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.reader-footer button:disabled {
-  opacity: .4;
-  cursor: default;
+/* --- CAMPO DE BUSCA --- */
+.search-box-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.reader-footer button:hover:not(:disabled) {
-  opacity: .8;
+/* Telas Grandes (Desktop): Busca Inline fixado */
+@media (min-width: 993px) {
+  .search-box-wrapper {
+    width: 240px;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+    padding: 0 8px 0 14px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .search-box input {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+  }
 }
 
-/* Play desativado (modo fala desligado em configurações) */
+/* --- MOBILE & TABLET (<= 992px) --- */
+@media (max-width: 992px) {
+  .reader-footer {
+    height: 64px;
+    padding: 0 12px;
+    position: relative;
+  }
 
+  .footer-center {
+    justify-content: space-evenly;
+    gap: 4px;
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Quando a busca abre no mobile:
+     Ela expande preenchendo o meio, mas DEIXA o .footer-left e .footer-right visíveis */
+  .footer-center.search-active {
+    flex: 1 1 auto;
+    justify-content: space-between;
+    padding: 0 6px;
+  }
+
+  .footer-center.search-active .search-box-wrapper {
+    flex: 1;
+    width: 100%;
+  }
+
+  .footer-center.search-active .search-box {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 42px;
+    padding: 0 6px 0 14px;
+    border-radius: 21px;
+    background: rgba(120, 120, 120, 0.1);
+    border: 1px solid var(--border);
+  }
+
+  .footer-center.search-active .search-box input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 15px;
+  }
+}
+
+/* Toast de Áudio Desativado */
 .play-button-wrapper {
   position: relative;
   display: inline-flex;
-  flex: 0 0 auto;
-}
-
-.play-disabled-icon {
-  width: 0.75em;
-  height: 0.75em;
-}
-
-.play-button-disabled {
-  opacity: 1;
 }
 
 .speech-disabled-toast {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
   white-space: nowrap;
-  font-size: 13px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 10;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 40;
 }
 
-/* Busca — dropdown de resultados */
+/* Dropdown de Resultados da Busca */
+.search-results-list {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  z-index: 50;
+}
+
+.search-result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.search-result-item:active {
+  background: rgba(120, 120, 120, 0.15);
+}
 
 .search-box-error {
   animation: search-box-shake 0.3s ease-in-out;
@@ -146,199 +215,4 @@
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-4px); }
   75% { transform: translateX(4px); }
-}
-
-.search-results-list {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  max-height: 260px;
-  overflow-y: auto;
-  margin: 0;
-  padding: 4px;
-  list-style: none;
-  background: var(--surface, #ffffff);
-  border: 1px solid var(--border, #d0d0d0);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 20;
-}
-
-.search-result-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.search-result-item:hover {
-  background: var(--button-inactive, #f0f0f0);
-}
-
-.search-result-page {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--button-active, #1a73e8);
-}
-
-.search-result-snippet {
-  font-size: 0.85rem;
-  color: var(--text, #1a1a1a);
-  line-height: 1.3;
-}
-
-/* RESPONSIVIDADE — só encolhe, nunca empilha em bloco */
-
-/* Tablets */
-@media (max-width: 992px) {
-  .reader-footer {
-    padding: 0 14px;
-    gap: 8px;
-  }
-
-  .footer-center {
-    gap: 10px;
-  }
-
-  .search-box-wrapper {
-    flex-basis: 200px;
-    min-width: 50px;
-  }
-
-  .search-box input {
-    height: 45px;
-    font-size: 16px;
-    padding: 0 12px;
-  }
-
-  .footer-button {
-    font-size: 32px;
-  }
-
-  .play-button {
-    font-size: 30px;
-  }
-
-  .search-button {
-    font-size: 26px;
-  }
-
-  .page-counter {
-    font-size: 20px;
-    min-width: 50px;
-  }
-
-  .speech-disabled-toast {
-    white-space: normal;
-    text-align: center;
-    max-width: 220px;
-  }
-}
-
-/* Celulares */
-@media (max-width: 768px) {
-  .reader-footer {
-    padding: 0 10px;
-    gap: 6px;
-  }
-
-  .footer-center {
-    gap: 8px;
-  }
-
-  .search-box-wrapper {
-    flex-basis: 120px;
-    min-width: 44px;
-  }
-
-  .search-box {
-    gap: 4px;
-  }
-
-  .search-box input {
-    height: 40px;
-    font-size: 15px;
-    padding: 0 10px;
-  }
-
-  .search-button {
-    font-size: 24px;
-    margin-left: 4px;
-  }
-
-  .footer-button {
-    font-size: 28px;
-  }
-
-  .play-button {
-    font-size: 26px;
-  }
-
-  .page-counter {
-    min-width: 44px;
-    font-size: 16px;
-  }
-
-  .search-results-list {
-    max-height: 220px;
-  }
-
-  .speech-disabled-toast {
-    max-width: 180px;
-    white-space: normal;
-    text-align: center;
-    font-size: 12px;
-  }
-}
-
-/* Celulares pequenos */
-@media (max-width: 480px) {
-  .reader-footer {
-    padding: 0 6px;
-    gap: 4px;
-  }
-
-  .footer-center {
-    gap: 5px;
-  }
-
-  .search-box-wrapper {
-    flex-basis: 70px;
-    min-width: 36px;
-  }
-
-  .search-box input {
-    height: 36px;
-    font-size: 14px;
-    padding: 0 8px;
-  }
-
-  .footer-button {
-    font-size: 22px;
-  }
-
-  .play-button {
-    font-size: 20px;
-  }
-
-  .search-button {
-    font-size: 19px;
-    margin-left: 2px;
-  }
-
-  .page-counter {
-    font-size: 13px;
-    min-width: 34px;
-  }
-
-  .search-result-page {
-    font-size: 0.7rem;
-  }
-
-  .search-result-snippet {
-    font-size: 0.8rem;
-  }
 }
