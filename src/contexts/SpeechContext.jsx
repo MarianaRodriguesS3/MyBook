@@ -6,11 +6,8 @@ const STORAGE_KEY = "reader-speech";
 function getStoredSpeech() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-
-    // Se não existir nada salvo, mantém o padrão como true
     return stored !== null ? JSON.parse(stored) : true;
   } catch (err) {
-    // localStorage indisponível (modo privado, etc) — usa o padrão
     return true;
   }
 }
@@ -22,7 +19,13 @@ export function SpeechProvider({ children }) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(speech));
     } catch (err) {
-      // silencioso — se não der pra salvar, só não persiste
+      // Silencioso
+    }
+
+    // Se o usuário desativar a fala pelo menu enquanto algo está sendo falado,
+    // cancelamos a reprodução do sintetizador imediatamente.
+    if (!speech && typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
     }
   }, [speech]);
 
@@ -30,10 +33,31 @@ export function SpeechProvider({ children }) {
     setSpeech((prev) => !prev);
   }
 
+  // Função centralizada para disparar a fala com validação
+  function speak(utteranceOrText) {
+    if (!speech) return; // 🛑 TRAVA GLOBAL: se speech for false, ignora totalmente
+
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      // Se for uma string simples, converte para SpeechSynthesisUtterance
+      const utterance =
+        typeof utteranceOrText === "string"
+          ? new SpeechSynthesisUtterance(utteranceOrText)
+          : utteranceOrText;
+
+      window.speechSynthesis.cancel(); // Para fala anterior antes de iniciar a nova
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  // Função centralizada para cancelar/parar a fala
+  function stop() {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }
+
   return (
-    <SpeechContext.Provider
-      value={{ speech, toggleSpeech }}
-    >
+    <SpeechContext.Provider value={{ speech, toggleSpeech, speak, stop }}>
       {children}
     </SpeechContext.Provider>
   );

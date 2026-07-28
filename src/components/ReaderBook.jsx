@@ -1,10 +1,6 @@
 import PageText from "./PageText";
 
-function PageImages({
-
-  images, hasText
-}) {
-
+function PageImages({ images }) {
   if (!images || images.length === 0) {
     return null;
   }
@@ -12,9 +8,7 @@ function PageImages({
   return (
     <>
       {images.map((src, index) => (
-        <img key={index} src={src} alt=""
-          className={hasText ? "page-image" : "page-image page-image-full"}
-        />
+        <img key={index} src={src} alt="" className="page-image" />
       ))}
     </>
   );
@@ -27,30 +21,19 @@ function PageContent({
   activeSentence,
   clickable,
   onSentenceClick,
-  searchHighlight
+  searchHighlight,
 }) {
-
   if (!content) {
-    return (
-      <p className="page-loading">
-        {loadingLabel}
-      </p>
-    );
+    return <p className="page-loading">{loadingLabel}</p>;
   }
 
   const hasText = content.text && content.text.trim().length > 0;
 
   return (
-    <div
-      className={`page-fit ${hasText ? "" : "image-only"}`}
-    >
-      <PageImages
-        images={content.images}
-        hasText={hasText}
-      />
+    <div className={`page-fit ${hasText ? "" : "image-only"}`}>
+      <PageImages images={content.images} />
 
-      {hasText &&
-
+      {hasText && (
         <PageText
           text={content.text}
           activeSentence={activeSentence}
@@ -59,7 +42,7 @@ function PageContent({
           onSentenceClick={onSentenceClick}
           searchHighlight={searchHighlight}
         />
-      }
+      )}
     </div>
   );
 }
@@ -74,48 +57,59 @@ function ReaderBook({
   activeSentence,
   playing,
   onSentenceClick,
-  searchHighlight
+  searchHighlight,
 }) {
-
   const clickable = !playing;
 
   return (
-    <section
-      className={`book-area ${mode}`}
-    >
-      {mode === "landscape" ?
+    <section className={`book-area ${mode}`}>
+      {mode === "landscape" ? (
         <>
           <div className="page left-page">
             <PageContent
               content={getPageContent(currentPage)}
               loadingLabel={loadingLabel}
               mode={mode}
-              activeSentence={readingPage === currentPage ? activeSentence : null}
+              activeSentence={
+                readingPage === currentPage ? activeSentence : null
+              }
               clickable={clickable}
-              onSentenceClick={(sentenceIndex) => onSentenceClick(currentPage, sentenceIndex)}
-              searchHighlight={searchHighlight && searchHighlight.page === currentPage ? searchHighlight : null}
+              onSentenceClick={(sentenceIndex) =>
+                onSentenceClick(currentPage, sentenceIndex)
+              }
+              searchHighlight={
+                searchHighlight && searchHighlight.page === currentPage
+                  ? searchHighlight
+                  : null
+              }
             />
           </div>
 
           <div className="page-divider"></div>
 
           <div className="page right-page">
-            {currentPage + 1 <= totalPages &&
+            {currentPage + 1 <= totalPages && (
               <PageContent
                 content={getPageContent(currentPage + 1)}
                 loadingLabel={loadingLabel}
                 mode={mode}
-                activeSentence={readingPage === currentPage + 1 ? activeSentence : null}
+                activeSentence={
+                  readingPage === currentPage + 1 ? activeSentence : null
+                }
                 clickable={clickable}
-                onSentenceClick={(sentenceIndex) => onSentenceClick(currentPage + 1, sentenceIndex)}
-                searchHighlight={searchHighlight && searchHighlight.page === currentPage + 1 ? searchHighlight : null}
+                onSentenceClick={(sentenceIndex) =>
+                  onSentenceClick(currentPage + 1, sentenceIndex)
+                }
+                searchHighlight={
+                  searchHighlight && searchHighlight.page === currentPage + 1
+                    ? searchHighlight
+                    : null
+                }
               />
-            }
+            )}
           </div>
         </>
-
-        :
-
+      ) : (
         <div className="page single-page">
           <PageContent
             content={getPageContent(currentPage)}
@@ -123,11 +117,17 @@ function ReaderBook({
             mode={mode}
             activeSentence={readingPage === currentPage ? activeSentence : null}
             clickable={clickable}
-            onSentenceClick={(sentenceIndex) => onSentenceClick(currentPage, sentenceIndex)}
-            searchHighlight={searchHighlight && searchHighlight.page === currentPage ? searchHighlight : null}
+            onSentenceClick={(sentenceIndex) =>
+              onSentenceClick(currentPage, sentenceIndex)
+            }
+            searchHighlight={
+              searchHighlight && searchHighlight.page === currentPage
+                ? searchHighlight
+                : null
+            }
           />
         </div>
-      }
+      )}
     </section>
   );
 }

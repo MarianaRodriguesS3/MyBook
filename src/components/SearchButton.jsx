@@ -3,9 +3,24 @@ import { useReader } from "../contexts/ReaderContext";
 
 function SearchIcon() {
   return (
-    <svg className="icon-svg" width="1em" height="1em" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <svg
+      className="icon-svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+    >
       <circle cx="10" cy="10" r="6.5" stroke="currentColor" strokeWidth="2.4" />
-      <line x1="15" y1="15" x2="20.5" y2="20.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <line
+        x1="15"
+        y1="15"
+        x2="20.5"
+        y2="20.5"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -14,9 +29,7 @@ function SearchButton() {
   const { openFile } = useReader();
 
   function openFileSelector() {
-    document
-      .getElementById("pdf-file-input")
-      .click();
+    document.getElementById("pdf-file-input").click();
   }
 
   function handleFileSelected(event) {

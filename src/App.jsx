@@ -5,16 +5,7 @@ import { useReader } from "./contexts/ReaderContext";
 function App() {
   const { file } = useReader();
 
-  return (
-    <>
-      {
-        file ?
-          <Reader />
-          :
-          <Home />
-      }
-    </>
-  );
+  return <>{file ? <Reader /> : <Home />}</>;
 }
 
 export default App;

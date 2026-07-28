@@ -4,7 +4,9 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   overflow: hidden;
 }
@@ -18,7 +20,9 @@ body {
 
 /* Tablets */
 @media (max-width: 992px) {
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100dvh;
   }
 
@@ -29,7 +33,9 @@ body {
 
 /* Celulares */
 @media (max-width: 768px) {
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100dvh;
     width: 100%;
     overflow: hidden;

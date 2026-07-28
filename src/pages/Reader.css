@@ -44,7 +44,6 @@
 .page-fit {
   width: 100%;
   height: 100%;
-  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -59,35 +58,38 @@
 
 .page-text {
   width: 100%;
-  flex: 1;
-  min-height: 0;
   margin: 0;
   white-space: pre-wrap;
   line-height: 1.35;
   overflow: hidden;
   text-align: justify;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .page-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 55%;
   max-width: 100%;
-  max-height: 40%;
   object-fit: contain;
   border-radius: 4px;
+  flex: 0 0 auto;
 }
 
-.page-image-full {
+.page-fit.image-only .page-image {
   width: auto;
-  max-width: 100%;
   height: 100%;
   max-height: 100%;
+  max-width: 100%;
 }
 
 .page-loading {
-  opacity: .6;
+  opacity: 0.6;
   font-size: 22px;
 }
 
-/* Marca-texto da leitura */
 .sentence {
   display: inline;
   transition: background-color 0.3s ease;
@@ -112,24 +114,16 @@
   .page {
     padding: 20px;
   }
-
   .landscape .page {
     width: 50%;
   }
-
   .single-page {
     width: 100%;
     height: 100%;
   }
-
   .page-divider {
     height: 85%;
   }
-
-  .page-image {
-    max-height: 35%;
-  }
-
   .page-loading {
     font-size: 20px;
   }
@@ -140,38 +134,28 @@
   .reader {
     height: 100dvh;
   }
-
   .book-area {
     padding: 8px;
   }
-
-  /* Em celulares sempre exibe apenas uma página */
-  .landscape .page,
+  .landscape .page {
+    width: 50%;
+  }
   .single-page {
     width: 100%;
     height: 100%;
   }
-
   .page {
-    padding: 12px;
+    padding: 16px;
   }
-
   .page-divider {
     display: none;
   }
-
   .page-text {
-    line-height: 1.45;
+    line-height: 1.5;
   }
-
-  .page-image {
-    max-height: 30%;
-  }
-
   .page-loading {
     font-size: 18px;
   }
-
 }
 
 /* Celulares pequenos */
@@ -179,19 +163,12 @@
   .book-area {
     padding: 4px;
   }
-
   .page {
     padding: 12px;
   }
-
   .page-text {
     line-height: 1.55;
   }
-
-  .page-image {
-    max-height: 28%;
-  }
-
   .page-loading {
     font-size: 16px;
   }

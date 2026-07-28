@@ -7,7 +7,6 @@ function getStoredTheme() {
   try {
     return localStorage.getItem(STORAGE_KEY) || "dia";
   } catch (err) {
-    // localStorage indisponível (modo privado, etc) — usa o padrão
     return "dia";
   }
 }
@@ -18,15 +17,11 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, theme);
-    } catch (err) {
-      // silencioso — se não der pra salvar, só não persiste
-    }
+    } catch (err) {}
   }, [theme]);
 
   return (
-    <ThemeContext.Provider
-      value={{ theme, setTheme }}
-    >
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

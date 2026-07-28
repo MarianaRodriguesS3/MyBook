@@ -8,7 +8,6 @@ function getStoredLanguage() {
   try {
     return localStorage.getItem(STORAGE_KEY) || "pt-BR";
   } catch (err) {
-    // localStorage indisponível (modo privado, etc) — usa o padrão
     return "pt-BR";
   }
 }
@@ -19,9 +18,7 @@ export function LanguageProvider({ children }) {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, language);
-    } catch (err) {
-      // silencioso — se não der pra salvar, só não persiste
-    }
+    } catch (err) {}
   }, [language]);
 
   function t(key) {
@@ -33,7 +30,7 @@ export function LanguageProvider({ children }) {
       value={{
         language,
         setLanguage,
-        t
+        t,
       }}
     >
       {children}

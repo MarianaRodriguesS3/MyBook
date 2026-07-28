@@ -5,30 +5,20 @@ const MAX_FONT_SIZE_PORTRAIT = 34;
 const MAX_FONT_SIZE_LANDSCAPE = 30;
 
 function splitText(text) {
-  if (!text)
-    return [];
+  if (!text) return [];
 
-  return text
-    .split(
-      /(?<=[.!?])\s+/
-    )
-    .filter(
-      item =>
-        item.trim().length > 0
-    );
+  return text.split(/(?<=[.!?])\s+/).filter((item) => item.trim().length > 0);
 }
 
 function locateSentenceIndex(text, sentences, charIndex) {
-  if (!text || charIndex == null)
-    return -1;
+  if (!text || charIndex == null) return -1;
 
   let searchFrom = 0;
 
   for (let i = 0; i < sentences.length; i++) {
     const start = text.indexOf(sentences[i], searchFrom);
 
-    if (start === -1)
-      continue;
+    if (start === -1) continue;
     const end = start + sentences[i].length;
 
     if (charIndex >= start && charIndex < end) {
@@ -45,24 +35,23 @@ function PageText({
   mode,
   clickable,
   onSentenceClick,
-  searchHighlight
+  searchHighlight,
 }) {
-
   const containerRef = useRef(null);
   const highlightRef = useRef(null);
   const sentences = splitText(text);
-  const matchSentenceIndex = searchHighlight ? locateSentenceIndex(text, sentences, searchHighlight.charIndex) : -1;
+  const matchSentenceIndex = searchHighlight
+    ? locateSentenceIndex(text, sentences, searchHighlight.charIndex)
+    : -1;
 
   useLayoutEffect(() => {
     const el = containerRef.current;
-    if (!el)
-      return;
+    if (!el) return;
 
-    const maxSize = mode === "portrait" ? MAX_FONT_SIZE_PORTRAIT : MAX_FONT_SIZE_LANDSCAPE;
-
+    const maxSize =
+      mode === "portrait" ? MAX_FONT_SIZE_PORTRAIT : MAX_FONT_SIZE_LANDSCAPE;
 
     function fitFontSize() {
-
       let low = MIN_FONT_SIZE * 2;
       let high = maxSize * 2;
       let best = MIN_FONT_SIZE * 2;
@@ -70,18 +59,13 @@ function PageText({
       el.style.lineHeight = "1.35";
 
       while (low <= high) {
-
         const mid = Math.floor((low + high) / 2);
 
         el.style.fontSize = `${mid / 2}px`;
 
-        if (
-          el.scrollHeight <= el.clientHeight
-        ) {
-
+        if (el.scrollHeight <= el.clientHeight) {
           best = mid;
           low = mid + 1;
-
         } else {
           high = mid - 1;
         }
@@ -105,59 +89,41 @@ function PageText({
       if (rafId) cancelAnimationFrame(rafId);
       resizeObserver.disconnect();
     };
-
-  }, [
-    text,
-    mode
-  ]);
+  }, [text, mode]);
 
   useLayoutEffect(() => {
-
-    if (
-      matchSentenceIndex !== -1 &&
-      highlightRef.current
-    ) {
+    if (matchSentenceIndex !== -1 && highlightRef.current) {
       highlightRef.current.scrollIntoView({
         block: "center",
-        behavior: "smooth"
+        behavior: "smooth",
       });
     }
-
-  }, [
-    matchSentenceIndex,
-    searchHighlight
-  ]);
+  }, [matchSentenceIndex, searchHighlight]);
 
   if (!text) {
     return null;
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="page-text"
-    >
-      {
-        sentences.map(
-          (sentence, index) => {
+    <div ref={containerRef} className="page-text">
+      {sentences.map((sentence, index) => {
+        const isSearchMatch = index === matchSentenceIndex;
 
-            const isSearchMatch = index === matchSentenceIndex;
-
-            return (
-              <span key={index} ref={isSearchMatch ? highlightRef : null}
-                className={
-                  (index === activeSentence ? "sentence active" : "sentence") +
-                  (isSearchMatch ? " sentence-search-match" : "") +
-                  (clickable ? " sentence-clickable" : "")
-                }
-                onClick={clickable ? () => onSentenceClick(index) : undefined}
-              >
-                {sentence}{" "}
-              </span>
-            );
-          }
-        )
-      }
+        return (
+          <span
+            key={index}
+            ref={isSearchMatch ? highlightRef : null}
+            className={
+              (index === activeSentence ? "sentence active" : "sentence") +
+              (isSearchMatch ? " sentence-search-match" : "") +
+              (clickable ? " sentence-clickable" : "")
+            }
+            onClick={clickable ? () => onSentenceClick(index) : undefined}
+          >
+            {sentence}{" "}
+          </span>
+        );
+      })}
     </div>
   );
 }

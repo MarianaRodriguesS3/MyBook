@@ -7,7 +7,6 @@ import { useSpeech } from "../contexts/SpeechContext";
 import "../App.css";
 
 function Home() {
-
   const [menuOpen, setMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { speech, toggleSpeech } = useSpeech();
@@ -28,10 +27,7 @@ function Home() {
       />
 
       <div className={`content ${menuOpen ? "menu-open" : ""}`}>
-        <Header
-          toggleMenu={toggleMenu}
-          menuOpen={menuOpen}
-        />
+        <Header toggleMenu={toggleMenu} menuOpen={menuOpen} />
         <History />
       </div>
     </div>

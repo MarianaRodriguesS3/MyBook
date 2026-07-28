@@ -7,19 +7,16 @@ import { SpeechProvider } from "./contexts/SpeechContext";
 import { ReaderProvider } from "./contexts/ReaderContext";
 import "./index.css";
 
-ReactDOM.createRoot(
-  document.getElementById("root")
-)
-  .render(
-    <React.StrictMode>
-      <ThemeProvider>
-        <LanguageProvider>
-          <SpeechProvider>
-            <ReaderProvider>
-              <App />
-            </ReaderProvider>
-          </SpeechProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </React.StrictMode>
-  );
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <ThemeProvider>
+      <LanguageProvider>
+        <SpeechProvider>
+          <ReaderProvider>
+            <App />
+          </ReaderProvider>
+        </SpeechProvider>
+      </LanguageProvider>
+    </ThemeProvider>
+  </React.StrictMode>,
+);

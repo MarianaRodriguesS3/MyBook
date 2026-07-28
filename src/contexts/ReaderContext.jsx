@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { loadPdfDocument, extractPageContent, renderPageThumbnail, } from "../services/pdfService";
-import { saveHistoryEntry, updateHistoryPage, } from "../services/historyService";
+import {
+  loadPdfDocument,
+  extractPageContent,
+  renderPageThumbnail,
+} from "../services/pdfService";
+import {
+  saveHistoryEntry,
+  updateHistoryPage,
+} from "../services/historyService";
 
 const ReaderContext = createContext();
 const SNIPPET_RADIUS = 32;
@@ -47,18 +54,15 @@ export function ReaderProvider({ children }) {
         lastOpened: Date.now(),
         currentPage: 1,
       });
-
     } catch (err) {
       console.warn("Não foi possível salvar no histórico:", err);
     }
   }
 
   async function openFileFromHistory(entry) {
-    const restoredFile = new File(
-      [entry.blob],
-      entry.fileName,
-      { type: "application/pdf" }
-    );
+    const restoredFile = new File([entry.blob], entry.fileName, {
+      type: "application/pdf",
+    });
 
     setFile(restoredFile);
     setFileName(restoredFile.name);
@@ -94,7 +98,7 @@ export function ReaderProvider({ children }) {
       return null;
     }
 
-    setLoadingPages(prev => ({
+    setLoadingPages((prev) => ({
       ...prev,
       [pageNumber]: true,
     }));
@@ -102,30 +106,25 @@ export function ReaderProvider({ children }) {
     try {
       const content = await extractPageContent(pdfDoc, pageNumber);
 
-      setPageCache(prev => ({
+      setPageCache((prev) => ({
         ...prev,
         [pageNumber]: content,
       }));
 
       return content;
-
     } catch (err) {
-      console.warn(
-        `Falha ao carregar a página ${pageNumber}:`,
-        err
-      );
+      console.warn(`Falha ao carregar a página ${pageNumber}:`, err);
 
-      const fallback = { text: "", images: [], };
+      const fallback = { text: "", images: [] };
 
-      setPageCache(prev => ({
+      setPageCache((prev) => ({
         ...prev,
         [pageNumber]: fallback,
       }));
 
       return fallback;
-
     } finally {
-      setLoadingPages(prev => {
+      setLoadingPages((prev) => {
         const next = { ...prev };
         delete next[pageNumber];
         return next;
@@ -163,10 +162,21 @@ export function ReaderProvider({ children }) {
         if (foundAt === -1) break;
 
         const start = Math.max(0, foundAt - SNIPPET_RADIUS);
-        const end = Math.min(text.length, foundAt + lowerQuery.length + SNIPPET_RADIUS);
-        const snippet = (start > 0 ? "…" : "") + text.slice(start, end).trim() + (end < text.length ? "…" : "");
+        const end = Math.min(
+          text.length,
+          foundAt + lowerQuery.length + SNIPPET_RADIUS,
+        );
+        const snippet =
+          (start > 0 ? "…" : "") +
+          text.slice(start, end).trim() +
+          (end < text.length ? "…" : "");
 
-        matches.push({ page, charIndex: foundAt, length: lowerQuery.length, snippet, });
+        matches.push({
+          page,
+          charIndex: foundAt,
+          length: lowerQuery.length,
+          snippet,
+        });
 
         fromIndex = foundAt + lowerQuery.length;
       }

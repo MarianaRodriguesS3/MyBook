@@ -5,18 +5,36 @@ import { useSpeech } from "../contexts/SpeechContext";
 
 function MenuIcon() {
   return (
-    <svg className="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M4 5H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M4 12H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M4 19H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <svg
+      className="icon-svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M4 5H20"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 12H16"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 19H20"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
-function SideMenu({
-  open, toggleMenu
-}) {
-
+function SideMenu({ open, toggleMenu }) {
   const { t, language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { speech, toggleSpeech } = useSpeech();
@@ -27,9 +45,7 @@ function SideMenu({
         <button className="close-menu-button" onClick={toggleMenu}>
           <MenuIcon />
         </button>
-        <h2>
-          {t("settings")}
-        </h2>
+        <h2>{t("settings")}</h2>
       </div>
 
       {/* Tema */}
@@ -57,8 +73,10 @@ function SideMenu({
       {/* Fala */}
       <div className="menu-section">
         <label>{t("speech")}</label>
-        <button className={`speech-button ${speech ? "active" : "inactive"}`}
-          onClick={toggleSpeech}>
+        <button
+          className={`speech-button ${speech ? "active" : "inactive"}`}
+          onClick={toggleSpeech}
+        >
           {speech ? `🔊 ${t("enabled")}` : `🔇 ${t("disabled")}`}
         </button>
       </div>

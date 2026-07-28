@@ -4,29 +4,25 @@ import { useSpeech } from "../contexts/SpeechContext";
 function splitText(text) {
   if (!text) return [];
 
-  return text
-    .split(/(?<=[.!?])\s+/)
-    .filter(
-      item =>
-        item.trim().length > 0
-    );
-
+  return text.split(/(?<=[.!?])\s+/).filter((item) => item.trim().length > 0);
 }
 
-const SpeechControl = forwardRef(function SpeechControl({
-  currentPage,
-  getPageContent,
-  loadPage,
-  mode,
-  totalPages,
-  playing,
-  setPlaying,
-  readingPage,
-  setReadingPage,
-  setActiveSentence,
-  onFinishPage
-}, ref) {
-
+const SpeechControl = forwardRef(function SpeechControl(
+  {
+    currentPage,
+    getPageContent,
+    loadPage,
+    mode,
+    totalPages,
+    playing,
+    setPlaying,
+    readingPage,
+    setReadingPage,
+    setActiveSentence,
+    onFinishPage,
+  },
+  ref,
+) {
   const { speech } = useSpeech();
   const currentUtterance = useRef(null);
   const sentenceIndex = useRef(0);
@@ -62,9 +58,7 @@ const SpeechControl = forwardRef(function SpeechControl({
     };
 
     utterance.onerror = (event) => {
-
       if (event.error === "canceled" || event.error === "interrupted") {
-
         return;
       }
 
@@ -78,6 +72,16 @@ const SpeechControl = forwardRef(function SpeechControl({
   }
 
   async function startReading(pageNumber, startIndex = 0) {
+    /*
+      Portão único: nenhuma fala começa por aqui se o modo
+      fala estiver desativado no menu — não importa se quem
+      chamou foi o botão de play, um clique numa frase (seekTo)
+      ou a continuação automática pra próxima página.
+    */
+    if (!speech) {
+      return;
+    }
+
     console.log("Página recebida no Speech:", pageNumber);
 
     const page = getPageContent(pageNumber);
@@ -87,13 +91,18 @@ const SpeechControl = forwardRef(function SpeechControl({
     if (!page || !page.text || page.text.trim() === "") {
       console.log("PÁGINA SEM TEXTO:", pageNumber);
 
-      if (mode === "landscape" && pageNumber === currentPage && currentPage + 1 <= totalPages) {
-
+      if (
+        mode === "landscape" &&
+        pageNumber === currentPage &&
+        currentPage + 1 <= totalPages
+      ) {
         const rightPage = getPageContent(currentPage + 1);
 
         if (rightPage && rightPage.text && rightPage.text.trim()) {
-
-          console.log("PÁGINA DIREITA DO PAR TEM TEXTO, LENDO:", currentPage + 1);
+          console.log(
+            "PÁGINA DIREITA DO PAR TEM TEXTO, LENDO:",
+            currentPage + 1,
+          );
 
           startReading(currentPage + 1);
 
@@ -110,7 +119,10 @@ const SpeechControl = forwardRef(function SpeechControl({
     window.speechSynthesis.cancel();
 
     sentences.current = splitText(page.text);
-    sentenceIndex.current = Math.min(Math.max(startIndex, 0), sentences.current.length - 1);
+    sentenceIndex.current = Math.min(
+      Math.max(startIndex, 0),
+      sentences.current.length - 1,
+    );
     pageReading.current = pageNumber;
 
     setReadingPage(pageNumber);
@@ -123,33 +135,29 @@ const SpeechControl = forwardRef(function SpeechControl({
 
   useImperativeHandle(ref, () => ({
     seekTo(pageNumber, sentenceIndex) {
-
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
       }
 
       startReading(pageNumber, sentenceIndex);
-    }
+    },
   }));
 
   function toggle() {
-
-    if (!speech) { return; }
+    if (!speech) {
+      return;
+    }
 
     if (window.speechSynthesis.speaking) {
-
       if (window.speechSynthesis.paused) {
-
         if (pageReading.current !== currentPage) {
           window.speechSynthesis.cancel();
           startReading(currentPage);
-
         } else {
           window.speechSynthesis.resume();
           playingRef.current = true;
           setPlaying(true);
         }
-
       } else {
         window.speechSynthesis.pause();
         playingRef.current = false;
@@ -163,41 +171,35 @@ const SpeechControl = forwardRef(function SpeechControl({
 
   const toggleRef = useRef(toggle);
 
-  useEffect(() => { toggleRef.current = toggle; });
+  useEffect(() => {
+    toggleRef.current = toggle;
+  });
 
   useEffect(() => {
-
-    function handler() { toggleRef.current(); }
+    function handler() {
+      toggleRef.current();
+    }
 
     document.addEventListener("toggle-reader-speech", handler);
 
     return () => {
-
       document.removeEventListener("toggle-reader-speech", handler);
     };
   }, []);
 
   useEffect(() => {
-
     if (readingPage != null && readingPage !== pageReading.current) {
-
       if (playingRef.current) {
-
         setTimeout(() => {
           startReading(readingPage);
         }, 100);
-
       } else {
-
         pageReading.current = readingPage;
       }
     }
-  }, [
-    readingPage
-  ]);
+  }, [readingPage]);
 
   useEffect(() => {
-
     return () => {
       window.speechSynthesis.cancel();
     };

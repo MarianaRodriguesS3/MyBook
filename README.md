@@ -252,8 +252,8 @@ Requisitos:
 
 Sempre que o usuário navegar entre páginas deverá ocorrer:
 
-- animação simulando uma página sendo virada; 
-- reprodução de um efeito sonoro de página sendo folheada. 
+- animação simulando uma página sendo virada;
+- reprodução de um efeito sonoro de página sendo folheada.
 
 ---
 
@@ -283,30 +283,26 @@ Sempre que o usuário navegar entre páginas deverá ocorrer:
 9. A cada mudança de página ocorre a animação e o efeito sonoro de folha sendo virada.
 10. O usuário pode retornar à página inicial utilizando a seta localizada no topo da tela.
 
+# Feito
 
-
-
-
-# Feito 
- - Continuar com as configurações do audio para que ele mude automaticamente para a proxima pagina que contenha texto.
- - Mudança de pagina automática que acompanha o audio.
- - Configurar o botao da fala no menu para que ele habilite ou desabilite os botoes de play e pause no footerReader.
- - Mudar o icone de play quando ele estiver desabilitado para um play cortado.
- - Ajustar layout do FooterReader.
- - Configurar o input de busca por palavras e paginas.
- - Trocar as frases:
-Quando ativada: Exibir a mensagem: Habilitado 🔊
-Quando desativada: Desabilitado 🔇
+- Continuar com as configurações do audio para que ele mude automaticamente para a proxima pagina que contenha texto.
+- Mudança de pagina automática que acompanha o audio.
+- Configurar o botao da fala no menu para que ele habilite ou desabilite os botoes de play e pause no footerReader.
+- Mudar o icone de play quando ele estiver desabilitado para um play cortado.
+- Ajustar layout do FooterReader.
+- Configurar o input de busca por palavras e paginas.
+- Trocar as frases:
+  Quando ativada: Exibir a mensagem: Habilitado 🔊
+  Quando desativada: Desabilitado 🔇
 - Mudar o icone da lupa: Lendo Agora 🔍
 - Corrigir a exibição das paginas no modo deitado sempre mostrar nomero impar 1/5 3/5...
-- Guardar tema, idioma e pagina 
+- Guardar tema, idioma e pagina
 - limpar histórico de navegação
-
+- Ajustar menuFooter em telas menores
+- Ajustar som automatico ao clicar no texto
+- Ajustar tamanho da imagem dentro do pdf em telas menores
+- Ajustar o tamanho do icone de play bloqueado
 
 # Falta fazer
 
 - Efeito sonoro e visual de Troca de Página
-- Ajustar menuFooter em telas menores
-- Ajustar som automatico ao clicar no texto
-- Ajustar tamanho da imagem dentro do pdf em telas menores
-

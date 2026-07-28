@@ -1,4 +1,3 @@
-/* --- ESTRUTURA PRINCIPAL (Aparência de Tab Bar de App) --- */
 .reader-footer {
   flex: 0 0 70px;
   height: 70px;
@@ -27,10 +26,9 @@
   flex: 1 1 auto;
   gap: 12px;
   height: 100%;
-  min-width: 0; /* Previne overflow em flexbox */
+  min-width: 0;
 }
 
-/* Botões com efeito Feedback Tátil (Estilo App Mobile) */
 .footer-button,
 .play-button,
 .search-button {
@@ -45,7 +43,9 @@
   color: var(--text);
   cursor: pointer;
   flex: 0 0 auto;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -56,10 +56,19 @@
   background: rgba(120, 120, 120, 0.2);
 }
 
-.footer-button { font-size: 24px; }
-.play-button { font-size: 22px; }
+.footer-button {
+  font-size: 24px;
+}
+.play-button {
+  font-size: 28px;
+}
 
-/* Contador Clean */
+.play-disabled-icon {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
 .page-counter {
   flex: 0 0 auto;
   padding: 4px 10px;
@@ -71,7 +80,6 @@
   white-space: nowrap;
 }
 
-/* --- CAMPO DE BUSCA --- */
 .search-box-wrapper {
   position: relative;
   display: flex;
@@ -102,6 +110,13 @@
     color: var(--text);
     font-size: 14px;
   }
+  .footer-left {
+    padding-left: 30px;
+  }
+
+  .footer-right {
+    padding-right: 30px;
+  }
 }
 
 /* --- MOBILE & TABLET (<= 992px) --- */
@@ -118,8 +133,6 @@
     transition: all 0.2s ease-in-out;
   }
 
-  /* Quando a busca abre no mobile:
-     Ela expande preenchendo o meio, mas DEIXA o .footer-left e .footer-right visíveis */
   .footer-center.search-active {
     flex: 1 1 auto;
     justify-content: space-between;
@@ -212,7 +225,14 @@
 }
 
 @keyframes search-box-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
 }

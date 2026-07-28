@@ -5,35 +5,70 @@ import "./FooterReader.css";
 
 function SearchIcon() {
   return (
-    <svg className="icon-svg" width="1em" height="1em" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <svg
+      className="icon-svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+    >
       <circle cx="10" cy="10" r="6.5" stroke="currentColor" strokeWidth="2.4" />
-      <line x1="15" y1="15" x2="20.5" y2="20.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <line
+        x1="15"
+        y1="15"
+        x2="20.5"
+        y2="20.5"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
 function PlayDisabledIcon() {
   return (
-    <svg className="play-disabled-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="11" fill="#ffffff" stroke="#d0d0d0" strokeWidth="1" />
+    <svg
+      className="play-disabled-icon"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="11"
+        fill="#ffffff"
+        stroke="#d0d0d0"
+        strokeWidth="1"
+      />
       <path d="M9.3 7.2 L9.3 16.8 L16.8 12 Z" fill="#1a1a1a" />
-      <circle cx="12" cy="12" r="10" fill="none" stroke="#e53935" strokeWidth="2.2" />
-      <line x1="5.3" y1="5.3" x2="18.7" y2="18.7" stroke="#e53935" strokeWidth="2.2" strokeLinecap="round" />
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        fill="none"
+        stroke="#e53935"
+        strokeWidth="2.2"
+      />
+      <line
+        x1="5.3"
+        y1="5.3"
+        x2="18.7"
+        y2="18.7"
+        stroke="#e53935"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
-/*
-  true em telas <= breakpoint (tablet/celular — comportamento de
-  "recolher" a busca), false em telas maiores (PC — tudo visível
-  o tempo todo). Usa matchMedia (reativo a resize/rotação) em vez
-  de só ler o tamanho uma vez no mount.
-*/
 function useIsCompact(breakpoint = 992) {
   const [isCompact, setIsCompact] = useState(() =>
     typeof window !== "undefined"
       ? window.matchMedia(`(max-width: ${breakpoint}px)`).matches
-      : false
+      : false,
   );
 
   useEffect(() => {
@@ -74,29 +109,17 @@ function FooterReader({
   const [searching, setSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef(null);
-
   const errorTimeoutRef = useRef(null);
   const searchBoxRef = useRef(null);
-
-  // telas médias/pequenas (tablet, celular) recolhem a busca;
-  // telas grandes (PC) mostram tudo junto o tempo todo
   const isCompact = useIsCompact(992);
 
-  // ao voltar pra PC com a busca "aberta" de quando era mobile,
-  // reseta — em telas grandes esse estado não controla nada, mas
-  // evita reabrir "sujo" se a pessoa apertar a tela de novo
   useEffect(() => {
     if (!isCompact) {
       setSearchOpen(false);
     }
   }, [isCompact]);
 
-  // nas telas grandes o input já fica sempre visível; nas compactas,
-  // só quando searchOpen for true (depois de tocar na lupa)
   const showInputInline = !isCompact || searchOpen;
-
-  // nas telas grandes os outros ícones nunca somem; nas compactas,
-  // somem quando a busca está aberta
   const showOtherButtons = !isCompact || !searchOpen;
 
   useEffect(() => {
@@ -110,51 +133,29 @@ function FooterReader({
     };
   }, []);
 
-  // fecha a lista de resultados ao clicar fora da caixa de pesquisa
   useEffect(() => {
-
     function handleClickOutside(event) {
-
       if (
         searchBoxRef.current &&
         !searchBoxRef.current.contains(event.target)
       ) {
-
         setResults([]);
 
         setSearchOpen(false);
-
       }
-
     }
 
-
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-
   }, []);
 
   useEffect(() => {
-
-    if (
-      searchOpen &&
-      searchInputRef.current
-    ) {
-
+    if (searchOpen && searchInputRef.current) {
       searchInputRef.current.focus();
-
     }
-
   }, [searchOpen]);
 
   function handlePlayClick() {
@@ -198,7 +199,8 @@ function FooterReader({
     setResults([]);
 
     const asNumber = Number(query);
-    const isPageNumber = Number.isInteger(asNumber) && String(asNumber) === query;
+    const isPageNumber =
+      Number.isInteger(asNumber) && String(asNumber) === query;
     const pageIsValid = isPageNumber && asNumber >= 1 && asNumber <= totalPages;
 
     setSearching(true);
@@ -237,33 +239,26 @@ function FooterReader({
   }
 
   function handleSearchButtonClick() {
-
-    // no compacto, o primeiro toque só abre o campo;
-    // no PC, o campo já está aberto — sempre busca direto
     if (isCompact && !searchOpen) {
       setSearchOpen(true);
       return;
     }
 
     runSearch();
-
   }
 
   return (
     <footer className="reader-footer">
       <div className="footer-left">
         {/* Voltar para Home */}
-        <button
-          className="footer-button"
-          onClick={closeFile}
-          title={t("back")}
-        >
+        <button className="footer-button" onClick={closeFile} title={t("back")}>
           ←
         </button>
       </div>
 
-      <div className={`footer-center ${searchOpen && isCompact ? "search-active" : ""}`}>
-
+      <div
+        className={`footer-center ${searchOpen && isCompact ? "search-active" : ""}`}
+      >
         {showOtherButtons && (
           <>
             {/* Página anterior */}
@@ -276,48 +271,35 @@ function FooterReader({
               ‹
             </button>
 
-
             {/* Play / Pause */}
             <div className="play-button-wrapper">
-
               <button
-                className={`play-button ${!speech ? "play-button-disabled" : ""
-                  }`}
+                className={`play-button ${
+                  !speech ? "play-button-disabled" : ""
+                }`}
                 onClick={handlePlayClick}
                 title={
                   !speech
                     ? t("speechDisabledTitle")
-                    : (playing
+                    : playing
                       ? t("pause")
-                      : t("play"))
+                      : t("play")
                 }
               >
-                {!speech
-                  ? <PlayDisabledIcon />
-                  : (playing ? "⏸" : "▶")
-                }
-
+                {!speech ? <PlayDisabledIcon /> : playing ? "⏸" : "▶"}
               </button>
-
 
               {showSpeechNotice && (
                 <div className="speech-disabled-toast">
                   {t("enableSpeechInSettings")}
                 </div>
               )}
-
             </div>
           </>
         )}
 
-
-
         {/* Pesquisa */}
-        <div
-          className="search-box-wrapper"
-          ref={searchBoxRef}
-        >
-
+        <div className="search-box-wrapper" ref={searchBoxRef}>
           <div
             className={`
                 search-box
@@ -325,7 +307,6 @@ function FooterReader({
                 ${showInputInline ? "search-open" : ""}
             `}
           >
-
             {showInputInline && (
               <input
                 ref={searchInputRef}
@@ -338,69 +319,45 @@ function FooterReader({
               />
             )}
 
-
             <button
               className="search-button"
               onClick={handleSearchButtonClick}
               title={t("search")}
               disabled={searching}
             >
-
-              {searching
-                ? "…"
-                : <SearchIcon />
-              }
-
+              {searching ? "…" : <SearchIcon />}
             </button>
-
           </div>
 
-
-
           {results.length > 0 && (
-
             <ul className="search-results-list">
-
               {results.map((result, i) => (
-
                 <li
                   key={`${result.kind}-${result.page}-${result.charIndex ?? "page"}-${i}`}
                   className="search-result-item"
                   onClick={() => selectResult(result)}
                 >
-
                   <span className="search-result-page">
                     {t("page")} {result.page}
                   </span>
-
 
                   {result.kind === "text" && (
                     <span className="search-result-snippet">
                       {result.snippet}
                     </span>
                   )}
-
                 </li>
-
               ))}
-
             </ul>
-
           )}
-
         </div>
-
-
 
         {showOtherButtons && (
           <>
-
             {/* Contador */}
             <span className="page-counter">
               {currentPage} / {totalPages || "--"}
             </span>
-
-
 
             {/* Próxima página */}
             <button
@@ -415,21 +372,15 @@ function FooterReader({
             >
               ›
             </button>
-
           </>
         )}
-
       </div>
       <div className="footer-right">
         {/* Alternar modo */}
         <button
           className="footer-button"
           onClick={toggleMode}
-          title={
-            mode === "landscape"
-              ? t("singlePageMode")
-              : t("bookMode")
-          }
+          title={mode === "landscape" ? t("singlePageMode") : t("bookMode")}
         >
           {mode === "landscape" ? "📖" : "📚"}
         </button>
