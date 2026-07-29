@@ -1,9 +1,8 @@
+import { useRef } from "react";
 import PageText from "./PageText";
 
 function PageImages({ images }) {
-  if (!images || images.length === 0) {
-    return null;
-  }
+  if (!images || images.length === 0) return null;
 
   return (
     <>
@@ -27,7 +26,8 @@ function PageContent({
     return <p className="page-loading">{loadingLabel}</p>;
   }
 
-  const hasText = content.text && content.text.trim().length > 0;
+  const cleanText = content.text ? content.text.replace(/\*/g, "").trim() : "";
+  const hasText = cleanText.length > 0;
 
   return (
     <div className={`page-fit ${hasText ? "" : "image-only"}`}>
@@ -58,11 +58,50 @@ function ReaderBook({
   playing,
   onSentenceClick,
   searchHighlight,
+  previousPage,
+  nextPage,
 }) {
   const clickable = !playing;
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = e.targetTouches[0].clientX;
+    touchStartY.current = e.targetTouches[0].clientY;
+    touchEndY.current = e.targetTouches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+    touchEndY.current = e.targetTouches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    const distanceX = touchStartX.current - touchEndX.current;
+    const distanceY = touchStartY.current - touchEndY.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(distanceX) > Math.abs(distanceY)) {
+      if (distanceX > minSwipeDistance && nextPage) {
+        nextPage();
+      }
+
+      if (distanceX < -minSwipeDistance && previousPage) {
+        previousPage();
+      }
+    }
+  };
 
   return (
-    <section className={`book-area ${mode}`}>
+    <section
+      className={`book-area ${mode}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {mode === "landscape" ? (
         <>
           <div className="page left-page">

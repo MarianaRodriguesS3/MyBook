@@ -25,25 +25,16 @@ function Reader() {
     setHighlight,
   } = useReader();
 
-  // controle visual da leitura
   const [playing, setPlaying] = useState(false);
-
-  // página que está sendo narrada
   const [readingPage, setReadingPage] = useState(null);
-
-  // frase atual para destaque
   const [activeSentence, setActiveSentence] = useState(null);
-
-  // referência para chamar métodos do SpeechControl diretamente (seekTo)
   const speechControlRef = useRef(null);
-
   const totalPagesRef = useRef(totalPages);
 
   useEffect(() => {
     totalPagesRef.current = totalPages;
   }, [totalPages]);
 
-  // Carrega páginas visíveis
   useEffect(() => {
     if (mode === "landscape") {
       loadPage(currentPage);
@@ -55,6 +46,13 @@ function Reader() {
       loadPage(currentPage);
     }
   }, [currentPage, mode, totalPages, loadPage]);
+
+  function hasReadableText(content) {
+    if (!content || !content.text) return false;
+
+    const cleanText = content.text.replace(/\*/g, "").trim();
+    return cleanText.length > 0;
+  }
 
   async function findAndReadNextPage(startPage) {
     console.log(
@@ -91,7 +89,7 @@ function Reader() {
 
       console.log("CONTEÚDO DA PÁGINA:", next, content);
 
-      if (content && content.text && content.text.trim().length > 0) {
+      if (hasReadableText(content)) {
         console.log("PÁGINA COM TEXTO ENCONTRADA:", next);
 
         setCurrentPage(next);
@@ -99,7 +97,6 @@ function Reader() {
 
         return next;
       }
-
       next++;
     }
 
@@ -121,7 +118,7 @@ function Reader() {
     if (pageNumber === currentPage && currentPage + 1 <= totalPages) {
       const rightContent = await loadPage(currentPage + 1);
 
-      if (rightContent && rightContent.text && rightContent.text.trim()) {
+      if (hasReadableText(rightContent)) {
         setReadingPage(currentPage + 1);
 
         return;
@@ -133,18 +130,16 @@ function Reader() {
     if (nextPair <= totalPages) {
       const content = await loadPage(nextPair);
 
-      if (content && content.text && content.text.trim()) {
+      if (hasReadableText(content)) {
         setCurrentPage(nextPair);
         setReadingPage(nextPair);
 
         return;
       }
-
       await findAndReadNextPage(nextPair + 1);
 
       return;
     }
-
     setPlaying(false);
   }
 
@@ -152,7 +147,6 @@ function Reader() {
     if (playing) {
       return;
     }
-
     speechControlRef.current?.seekTo(pageNumber, sentenceIndex);
   }
 
@@ -162,6 +156,7 @@ function Reader() {
 
   function previousPage() {
     setActiveSentence(null);
+    setHighlight(null); // Limpa destaques ao navegar
 
     const step = mode === "landscape" ? 2 : 1;
 
@@ -172,6 +167,7 @@ function Reader() {
 
   function nextPage() {
     setActiveSentence(null);
+    setHighlight(null); // Limpa destaques ao navegar
 
     const step = mode === "landscape" ? 2 : 1;
 
@@ -209,6 +205,8 @@ function Reader() {
         playing={playing}
         onSentenceClick={handleSentenceClick}
         searchHighlight={highlight}
+        previousPage={previousPage}
+        nextPage={nextPage}
       />
 
       <SpeechControl

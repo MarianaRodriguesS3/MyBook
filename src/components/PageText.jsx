@@ -29,6 +29,20 @@ function locateSentenceIndex(text, sentences, charIndex) {
   return -1;
 }
 
+function renderFormattedText(str) {
+  const parts = str.split(/(\*\*.*?\*\*|\n)/g);
+
+  return parts.map((part, i) => {
+    if (part === "\n") {
+      return <br key={i} />;
+    }
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 function PageText({
   text,
   activeSentence,
@@ -40,6 +54,7 @@ function PageText({
   const containerRef = useRef(null);
   const highlightRef = useRef(null);
   const sentences = splitText(text);
+
   const matchSentenceIndex = searchHighlight
     ? locateSentenceIndex(text, sentences, searchHighlight.charIndex)
     : -1;
@@ -105,7 +120,11 @@ function PageText({
   }
 
   return (
-    <div ref={containerRef} className="page-text">
+    <div
+      ref={containerRef}
+      className="page-text"
+      style={{ whiteSpace: "pre-wrap" }}
+    >
       {sentences.map((sentence, index) => {
         const isSearchMatch = index === matchSentenceIndex;
 
@@ -120,7 +139,7 @@ function PageText({
             }
             onClick={clickable ? () => onSentenceClick(index) : undefined}
           >
-            {sentence}{" "}
+            {renderFormattedText(sentence)}{" "}
           </span>
         );
       })}

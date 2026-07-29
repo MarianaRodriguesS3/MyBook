@@ -149,11 +149,11 @@ export function ReaderProvider({ children }) {
 
     for (let page = 1; page <= totalPages; page++) {
       const content = pageCache[page] || (await loadPage(page));
-      const text = content?.text || "";
+      const rawText = content?.text || "";
 
-      if (!text) continue;
+      if (!rawText) continue;
 
-      const lowerText = text.toLowerCase();
+      const lowerText = rawText.toLowerCase();
       let fromIndex = 0;
 
       while (true) {
@@ -163,13 +163,20 @@ export function ReaderProvider({ children }) {
 
         const start = Math.max(0, foundAt - SNIPPET_RADIUS);
         const end = Math.min(
-          text.length,
+          rawText.length,
           foundAt + lowerQuery.length + SNIPPET_RADIUS,
         );
+
+        const rawSnippet = rawText.slice(start, end);
+        const cleanSnippet = rawSnippet
+          .replace(/\*/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
         const snippet =
           (start > 0 ? "…" : "") +
-          text.slice(start, end).trim() +
-          (end < text.length ? "…" : "");
+          cleanSnippet +
+          (end < rawText.length ? "…" : "");
 
         matches.push({
           page,

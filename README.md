@@ -288,6 +288,10 @@ Sempre que o usuário navegar entre páginas deverá ocorrer:
 - Usado para tornar o app instalavel
 - Configuração dos arquivos vite.config.js e index.html para usala-lo.
 
+# biblioteca pdf.js (pdfjs-dist), desenvolvida pela Mozilla.
+
+# Web Speech API nativa dos navegadores (window.speechSynthesis - para o audio)
+
 # Feito
 
 - Continuar com as configurações do audio para que ele mude automaticamente para a proxima pagina que contenha texto.
@@ -311,3 +315,4 @@ Sempre que o usuário navegar entre páginas deverá ocorrer:
 # Falta fazer
 
 - Efeito sonoro e visual de Troca de Página
+- Verificar se a api tem mais opçoes de vozes

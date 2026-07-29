@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import "./SideMenu.css";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -38,9 +39,34 @@ function SideMenu({ open, toggleMenu }) {
   const { t, language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { speech, toggleSpeech } = useSpeech();
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const distance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (distance > minSwipeDistance && open) {
+      toggleMenu();
+    }
+  };
 
   return (
-    <aside className={`side-menu ${open ? "open" : ""}`}>
+    <aside
+      className={`side-menu ${open ? "open" : ""}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="side-menu-title">
         <button className="close-menu-button" onClick={toggleMenu}>
           <MenuIcon />

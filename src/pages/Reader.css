@@ -24,6 +24,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .landscape .page {
@@ -39,6 +40,7 @@
   height: 90%;
   width: 1px;
   background: var(--text);
+  opacity: 0.2;
 }
 
 .page-fit {
@@ -60,11 +62,20 @@
   width: 100%;
   margin: 0;
   white-space: pre-wrap;
-  line-height: 1.35;
-  overflow: hidden;
+  line-height: 1.45;
+  overflow-y: auto;
   text-align: justify;
   flex: 1 1 auto;
   min-height: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.page-text strong,
+.page-text b {
+  font-weight: 700;
+  color: inherit;
 }
 
 .page-image {
@@ -76,6 +87,7 @@
   object-fit: contain;
   border-radius: 4px;
   flex: 0 0 auto;
+  margin-bottom: 12px;
 }
 
 .page-fit.image-only .page-image {
@@ -83,6 +95,7 @@
   height: 100%;
   max-height: 100%;
   max-width: 100%;
+  margin-bottom: 0;
 }
 
 .page-loading {
@@ -90,24 +103,30 @@
   font-size: 22px;
 }
 
+/* Destaque de Frases e Busca */
 .sentence {
   display: inline;
-  transition: background-color 0.3s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  cursor: pointer;
 }
 
 .sentence.active {
   background-color: rgba(255, 230, 0, 0.55);
-  border-radius: 4px;
-  box-shadow: 0 0 8px rgba(255, 220, 0, 0.8);
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(255, 220, 0, 0.7);
 }
 
 .sentence-search-match {
   background-color: rgba(0, 174, 255, 0.35);
-  border-radius: 4px;
-  box-shadow: 0 0 8px rgba(0, 174, 255, 0.7);
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(0, 174, 255, 0.6);
 }
 
-/*RESPONSIVIDADE*/
+/* RESPONSIVIDADE */
 
 /* Tablets */
 @media (max-width: 992px) {
@@ -152,6 +171,7 @@
   }
   .page-text {
     line-height: 1.5;
+    text-align: left;
   }
   .page-loading {
     font-size: 18px;
