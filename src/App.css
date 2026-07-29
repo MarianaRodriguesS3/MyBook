@@ -18,6 +18,11 @@
   --danger: #d00000;
 }
 
+.theme-dia select:focus {
+  outline: none;
+  border: 2px solid #704214; /* cor da borda no tema claro */
+}
+
 .theme-noite {
   --background: #000000;
   --text: #ffffff;
