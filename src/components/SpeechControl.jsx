@@ -176,18 +176,26 @@ const SpeechControl = forwardRef(function SpeechControl(
     }
 
     if (playingRef.current) {
-      window.speechSynthesis.pause();
+      // "pausa": cancela o áudio, mas mantém a posição (sentenceIndex não avança
+      // porque cancel() não dispara onend)
+      window.speechSynthesis.cancel();
       playingRef.current = false;
       pausedRef.current = true;
       setPlaying(false);
       return;
     }
 
-    if (pausedRef.current && pageReading.current != null) {
-      window.speechSynthesis.resume();
-      playingRef.current = true;
+    if (
+      pausedRef.current &&
+      pageReading.current != null &&
+      sentences.current.length > 0
+    ) {
+      // "retomar": re-sintetiza a partir da mesma frase, sem depender do
+      // resume() nativo (instável em navegadores/WebView mobile)
       pausedRef.current = false;
+      playingRef.current = true;
       setPlaying(true);
+      speakSentence();
       return;
     }
 
