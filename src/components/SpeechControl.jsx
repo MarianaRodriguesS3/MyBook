@@ -4,7 +4,33 @@ import { useSpeech } from "../contexts/SpeechContext";
 function splitText(text) {
   if (!text) return [];
 
-  return text.split(/(?<=[.!?])\s+/).filter((item) => item.trim().length > 0);
+  const paragraphs = text.split(/\n{2,}/);
+  const sentences = [];
+
+  for (const rawParagraph of paragraphs) {
+    const trimmed = rawParagraph.trim();
+    if (!trimmed) continue;
+
+    const isHeading = trimmed.startsWith("@@") && trimmed.endsWith("@@");
+    const clean = (isHeading ? trimmed.slice(2, -2) : trimmed)
+      .replace(/\*\*/g, "")
+      .trim();
+
+    if (!clean) continue;
+
+    if (isHeading) {
+      sentences.push(clean);
+      continue;
+    }
+
+    const parts = clean
+      .split(/(?<=[.!?])\s+/)
+      .filter((item) => item.trim().length > 0);
+
+    sentences.push(...parts);
+  }
+
+  return sentences;
 }
 
 const SpeechControl = forwardRef(function SpeechControl(
@@ -29,6 +55,7 @@ const SpeechControl = forwardRef(function SpeechControl(
   const sentences = useRef([]);
   const pageReading = useRef(null);
   const playingRef = useRef(playing);
+  const pausedRef = useRef(false);
 
   useEffect(() => {
     playingRef.current = playing;
@@ -148,24 +175,24 @@ const SpeechControl = forwardRef(function SpeechControl(
       return;
     }
 
-    if (window.speechSynthesis.speaking) {
-      if (window.speechSynthesis.paused) {
-        if (pageReading.current !== currentPage) {
-          window.speechSynthesis.cancel();
-          startReading(currentPage);
-        } else {
-          window.speechSynthesis.resume();
-          playingRef.current = true;
-          setPlaying(true);
-        }
-      } else {
-        window.speechSynthesis.pause();
-        playingRef.current = false;
-        setPlaying(false);
-      }
-
+    if (playingRef.current) {
+      window.speechSynthesis.pause();
+      playingRef.current = false;
+      pausedRef.current = true;
+      setPlaying(false);
       return;
     }
+
+    if (pausedRef.current && pageReading.current != null) {
+      window.speechSynthesis.resume();
+      playingRef.current = true;
+      pausedRef.current = false;
+      setPlaying(true);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    pausedRef.current = false;
     startReading(currentPage);
   }
 
@@ -202,6 +229,7 @@ const SpeechControl = forwardRef(function SpeechControl(
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
+      pausedRef.current = false;
     };
   }, []);
 

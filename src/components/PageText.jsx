@@ -7,7 +7,29 @@ const MAX_FONT_SIZE_LANDSCAPE = 30;
 function splitText(text) {
   if (!text) return [];
 
-  return text.split(/(?<=[.!?])\s+/).filter((item) => item.trim().length > 0);
+  const paragraphs = text.split(/\n{2,}/);
+  const sentences = [];
+
+  for (const rawParagraph of paragraphs) {
+    const trimmed = rawParagraph.trim();
+    if (!trimmed) continue;
+
+    const isHeading = trimmed.startsWith("@@") && trimmed.endsWith("@@");
+
+    if (isHeading) {
+      const clean = trimmed.slice(2, -2).trim();
+      if (clean) sentences.push(clean);
+      continue;
+    }
+
+    const parts = trimmed
+      .split(/(?<=[.!?])\s+/)
+      .filter((item) => item.trim().length > 0);
+
+    sentences.push(...parts);
+  }
+
+  return sentences;
 }
 
 function locateSentenceIndex(text, sentences, charIndex) {
@@ -29,13 +51,10 @@ function locateSentenceIndex(text, sentences, charIndex) {
   return -1;
 }
 
-function renderFormattedText(str) {
-  const parts = str.split(/(\*\*.*?\*\*|\n)/g);
+function renderInlineFormatting(str) {
+  const parts = str.split(/(\*\*.*?\*\*)/g);
 
   return parts.map((part, i) => {
-    if (part === "\n") {
-      return <br key={i} />;
-    }
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={i}>{part.slice(2, -2)}</strong>;
     }
@@ -43,8 +62,64 @@ function renderFormattedText(str) {
   });
 }
 
+function buildParagraphBlocks(text, sentences) {
+  if (!text) return [];
+
+  const rawParagraphs = text.split(/\n{2,}/);
+  const paragraphs = [];
+  let searchFrom = 0;
+
+  for (const rawPara of rawParagraphs) {
+    const trimmed = rawPara.trim();
+    if (!trimmed) continue;
+
+    const start = text.indexOf(trimmed, searchFrom);
+    const safeStart = start === -1 ? searchFrom : start;
+    const end = safeStart + trimmed.length;
+
+    paragraphs.push({
+      start: safeStart,
+      end,
+      isHeading: trimmed.startsWith("@@") && trimmed.endsWith("@@"),
+    });
+
+    searchFrom = end;
+  }
+
+  if (!paragraphs.length) return [];
+
+  let sentSearchFrom = 0;
+  const sentenceOffsets = sentences.map((sentence) => {
+    const start = text.indexOf(sentence, sentSearchFrom);
+    const safeStart = start === -1 ? sentSearchFrom : start;
+    sentSearchFrom = safeStart + sentence.length;
+    return safeStart;
+  });
+
+  const blocks = paragraphs.map((p) => ({
+    isHeading: p.isHeading,
+    indices: [],
+  }));
+
+  let paraCursor = 0;
+
+  sentenceOffsets.forEach((offset, sentenceIndex) => {
+    while (
+      paraCursor < paragraphs.length - 1 &&
+      offset >= paragraphs[paraCursor].end
+    ) {
+      paraCursor++;
+    }
+    blocks[paraCursor].indices.push(sentenceIndex);
+  });
+
+  return blocks;
+}
+
 function PageText({
   text,
+  images,
+  blocks,
   activeSentence,
   mode,
   clickable,
@@ -54,6 +129,7 @@ function PageText({
   const containerRef = useRef(null);
   const highlightRef = useRef(null);
   const sentences = splitText(text);
+  const paragraphBlocks = buildParagraphBlocks(text, sentences);
 
   const matchSentenceIndex = searchHighlight
     ? locateSentenceIndex(text, sentences, searchHighlight.charIndex)
@@ -73,12 +149,23 @@ function PageText({
 
       el.style.lineHeight = "1.35";
 
+      // altura ocupada pelas imagens não muda com o tamanho da fonte,
+      // então mede-se uma vez e desconta do espaço disponível pro texto
+      const imageElements = el.querySelectorAll("img");
+      let imagesHeight = 0;
+      imageElements.forEach((img) => {
+        imagesHeight += img.getBoundingClientRect().height;
+      });
+
       while (low <= high) {
         const mid = Math.floor((low + high) / 2);
 
         el.style.fontSize = `${mid / 2}px`;
 
-        if (el.scrollHeight <= el.clientHeight) {
+        const textOverflow = el.scrollHeight - imagesHeight;
+        const availableForText = el.clientHeight - imagesHeight;
+
+        if (textOverflow <= availableForText) {
           best = mid;
           low = mid + 1;
         } else {
@@ -104,7 +191,7 @@ function PageText({
       if (rafId) cancelAnimationFrame(rafId);
       resizeObserver.disconnect();
     };
-  }, [text, mode]);
+  }, [text, mode, images, blocks]);
 
   useLayoutEffect(() => {
     if (matchSentenceIndex !== -1 && highlightRef.current) {
@@ -115,34 +202,67 @@ function PageText({
     }
   }, [matchSentenceIndex, searchHighlight]);
 
-  if (!text) {
+  if (!text && (!images || !images.length)) {
     return null;
   }
 
-  return (
-    <div
-      ref={containerRef}
-      className="page-text"
-      style={{ whiteSpace: "pre-wrap" }}
-    >
-      {sentences.map((sentence, index) => {
-        const isSearchMatch = index === matchSentenceIndex;
+  function renderParagraph(block, key) {
+    const Wrapper = block.isHeading ? "div" : "p";
+    const className = block.isHeading ? "page-heading" : "page-paragraph";
 
-        return (
-          <span
-            key={index}
-            ref={isSearchMatch ? highlightRef : null}
-            className={
-              (index === activeSentence ? "sentence active" : "sentence") +
-              (isSearchMatch ? " sentence-search-match" : "") +
-              (clickable ? " sentence-clickable" : "")
-            }
-            onClick={clickable ? () => onSentenceClick(index) : undefined}
-          >
-            {renderFormattedText(sentence)}{" "}
-          </span>
-        );
-      })}
+    return (
+      <Wrapper key={key} className={className}>
+        {block.indices.map((index) => {
+          const sentence = sentences[index];
+          const isSearchMatch = index === matchSentenceIndex;
+
+          return (
+            <span
+              key={index}
+              ref={isSearchMatch ? highlightRef : null}
+              className={
+                (index === activeSentence ? "sentence active" : "sentence") +
+                (isSearchMatch ? " sentence-search-match" : "") +
+                (clickable ? " sentence-clickable" : "")
+              }
+              onClick={clickable ? () => onSentenceClick(index) : undefined}
+            >
+              {renderInlineFormatting(sentence)}{" "}
+            </span>
+          );
+        })}
+      </Wrapper>
+    );
+  }
+
+  const orderedBlocks =
+    blocks && blocks.length
+      ? blocks
+      : [
+          ...(images || []).map((src) => ({ type: "image", src })),
+          ...paragraphBlocks.map(() => ({ type: "text" })),
+        ];
+
+  let paragraphCursor = 0;
+
+  const content = orderedBlocks.map((entry, i) => {
+    if (entry.type === "image") {
+      return (
+        <img key={`img-${i}`} src={entry.src} alt="" className="page-image" />
+      );
+    }
+
+    const block = paragraphBlocks[paragraphCursor];
+    paragraphCursor++;
+
+    if (!block) return null;
+
+    return renderParagraph(block, `p-${i}`);
+  });
+
+  return (
+    <div ref={containerRef} className="page-text">
+      {content}
     </div>
   );
 }

@@ -80,13 +80,15 @@
 
 .page-image {
   display: block;
-  width: 100%;
+  width: auto;
   height: auto;
-  max-height: 55%;
   max-width: 100%;
+  max-height: 55%;
   object-fit: contain;
   border-radius: 4px;
   flex: 0 0 auto;
+  margin-left: auto; /* <--- Centraliza à esquerda */
+  margin-right: auto; /* <--- Centraliza à direita */
   margin-bottom: 12px;
 }
 
@@ -124,6 +126,19 @@
   background-color: rgba(0, 174, 255, 0.35);
   border-radius: 3px;
   box-shadow: 0 0 6px rgba(0, 174, 255, 0.6);
+}
+
+.page-paragraph {
+  margin: 0;
+  text-indent: 1.5em;
+}
+
+.page-heading {
+  font-weight: bold;
+  font-size: 1.3em;
+  margin: 0.6em 0 0.4em;
+  text-align: center;
+  text-indent: 0;
 }
 
 /* RESPONSIVIDADE */

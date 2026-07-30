@@ -26,23 +26,31 @@ function PageContent({
     return <p className="page-loading">{loadingLabel}</p>;
   }
 
-  const cleanText = content.text ? content.text.replace(/\*/g, "").trim() : "";
+  const cleanText = content.text
+    ? content.text.replace(/\*/g, "").replace(/@@/g, "").trim()
+    : "";
   const hasText = cleanText.length > 0;
 
-  return (
-    <div className={`page-fit ${hasText ? "" : "image-only"}`}>
-      <PageImages images={content.images} />
+  if (!hasText) {
+    return (
+      <div className="page-fit image-only">
+        <PageImages images={content.images} />
+      </div>
+    );
+  }
 
-      {hasText && (
-        <PageText
-          text={content.text}
-          activeSentence={activeSentence}
-          mode={mode}
-          clickable={clickable}
-          onSentenceClick={onSentenceClick}
-          searchHighlight={searchHighlight}
-        />
-      )}
+  return (
+    <div className="page-fit">
+      <PageText
+        text={content.text}
+        images={content.images}
+        blocks={content.blocks}
+        activeSentence={activeSentence}
+        mode={mode}
+        clickable={clickable}
+        onSentenceClick={onSentenceClick}
+        searchHighlight={searchHighlight}
+      />
     </div>
   );
 }

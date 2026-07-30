@@ -19,9 +19,10 @@ export async function extractPageContent(pdfDoc, pageNumber) {
     includeMarkedContent: true,
   });
 
-  const text = processTextItems(textContent.items);
+  const { text, paragraphStarts } = processTextItems(textContent.items);
 
   let images = [];
+  let blocks = [];
 
   try {
     const viewport = page.getViewport({ scale: RENDER_SCALE });
@@ -38,7 +39,25 @@ export async function extractPageContent(pdfDoc, pageNumber) {
 
     const operatorList = await page.getOperatorList();
 
-    images = extractImagesFromCanvas(canvas, viewport, operatorList);
+    const extractedImages = extractImagesFromCanvas(
+      canvas,
+      viewport,
+      operatorList,
+    );
+    images = extractedImages.map((img) => img.src);
+
+    const paragraphMarkers = paragraphStarts.map((p) => {
+      const [, vy] = viewport.convertToViewportPoint(p.x, p.y);
+      return { type: "text", y: vy };
+    });
+
+    const imageMarkers = extractedImages.map((img) => ({
+      type: "image",
+      y: img.y,
+      src: img.src,
+    }));
+
+    blocks = [...paragraphMarkers, ...imageMarkers].sort((a, b) => a.y - b.y);
   } catch (err) {
     console.warn(
       `Falha ao renderizar/extrair imagens da página ${pageNumber}:`,
@@ -49,6 +68,7 @@ export async function extractPageContent(pdfDoc, pageNumber) {
   return {
     text,
     images,
+    blocks,
   };
 }
 
@@ -77,10 +97,10 @@ export async function renderPageThumbnail(
 }
 
 function processTextItems(items) {
-  if (!items?.length) return "";
+  if (!items?.length) return { text: "", paragraphStarts: [] };
 
   const validItems = items.filter((item) => item.str && item.str.trim() !== "");
-  if (!validItems.length) return "";
+  if (!validItems.length) return { text: "", paragraphStarts: [] };
 
   validItems.sort((a, b) => {
     const yDiff = b.transform[5] - a.transform[5];
@@ -88,67 +108,210 @@ function processTextItems(items) {
     return a.transform[4] - b.transform[4];
   });
 
-  let result = "";
-  let previousItem = null;
+  function fontSizeOf(item) {
+    return Math.abs(item.transform[3]) || Math.abs(item.transform[0]) || 10;
+  }
+
+  // --- Passo 1: agrupar itens em linhas (por proximidade vertical) ---
+  const lines = [];
+  let currentLine = null;
 
   for (const item of validItems) {
-    let text = item.str;
+    const y = item.transform[5];
+    const fontSize = fontSizeOf(item);
 
-    const fontName = (item.fontName || "").toLowerCase();
-    const isBold =
-      fontName.includes("bold") ||
-      fontName.includes("black") ||
-      fontName.includes("heavy") ||
-      fontName.includes("semibold") ||
-      fontName.includes("demi");
+    if (
+      currentLine &&
+      Math.abs(currentLine.y - y) <=
+        Math.max(fontSize, currentLine.fontSize) * 0.4
+    ) {
+      currentLine.items.push(item);
+      currentLine.fontSize = Math.max(currentLine.fontSize, fontSize);
+    } else {
+      currentLine = { y, fontSize, x: item.transform[4], items: [item] };
+      lines.push(currentLine);
+    }
+  }
 
-    if (isBold) {
-      text = `**${text}**`;
+  if (!lines.length) return { text: "", paragraphStarts: [] };
+
+  // --- Passo 2: margem esquerda "padrão" (moda dos x de início de linha) ---
+  const xCounts = new Map();
+  for (const line of lines) {
+    const roundedX = Math.round(line.x);
+    xCounts.set(roundedX, (xCounts.get(roundedX) || 0) + 1);
+  }
+
+  let bodyLeftMargin = lines[0].x;
+  let bestXCount = 0;
+  for (const [x, count] of xCounts) {
+    if (count > bestXCount) {
+      bestXCount = count;
+      bodyLeftMargin = x;
+    }
+  }
+
+  // --- Passo 2b: tamanho de fonte "padrão" do corpo (moda arredondada) ---
+  const sizeCounts = new Map();
+  for (const line of lines) {
+    const roundedSize = Math.round(line.fontSize);
+    sizeCounts.set(roundedSize, (sizeCounts.get(roundedSize) || 0) + 1);
+  }
+
+  let bodyFontSize = lines[0].fontSize;
+  let bestSizeCount = 0;
+  for (const [size, count] of sizeCounts) {
+    if (count > bestSizeCount) {
+      bestSizeCount = count;
+      bodyFontSize = size;
+    }
+  }
+
+  // --- Passo 2c: fonte "padrão" do corpo (moda do fontName da linha) ---
+  const fontCounts = new Map();
+  for (const line of lines) {
+    const lineFontName = (line.items[0]?.fontName || "").toLowerCase();
+    fontCounts.set(lineFontName, (fontCounts.get(lineFontName) || 0) + 1);
+  }
+
+  let bodyFontName = lines[0].items[0]?.fontName?.toLowerCase() || "";
+  let bestFontCount = 0;
+  for (const [fontName, count] of fontCounts) {
+    if (count > bestFontCount) {
+      bestFontCount = count;
+      bodyFontName = fontName;
+    }
+  }
+
+  const HEADING_SIZE_RATIO = 1.1;
+  const TITLE_BLOCK_MAX_LINES = 3;
+  const TITLE_LINE_MAX_WORDS = 6;
+
+  // --- Passo 3: montar o texto ---
+  let result = "";
+  let previousLine = null;
+  let previousWasHeading = false;
+  let titleBlockActive = false;
+  let titleBlockCount = 0;
+  const paragraphStarts = [];
+
+  for (const line of lines) {
+    const isBigFont = line.fontSize > bodyFontSize * HEADING_SIZE_RATIO;
+
+    const isFullyBold = line.items.every((item) => {
+      const fontName = (item.fontName || "").toLowerCase();
+      return (
+        fontName.includes("bold") ||
+        fontName.includes("black") ||
+        fontName.includes("heavy") ||
+        fontName.includes("semibold") ||
+        fontName.includes("demi")
+      );
+    });
+
+    const lineFontName = (line.items[0]?.fontName || "").toLowerCase();
+    const isDifferentFont = lineFontName !== bodyFontName;
+
+    const rawLineText = line.items
+      .map((item) => item.str)
+      .join(" ")
+      .trim();
+    const lineWordCount = rawLineText.split(/\s+/).filter(Boolean).length;
+    const isShortLine =
+      lineWordCount > 0 && lineWordCount <= TITLE_LINE_MAX_WORDS;
+    const isShortSpecial = (isFullyBold || isDifferentFont) && isShortLine;
+
+    const isNumericLine = /^\d+$/.test(rawLineText);
+    const isStrongHeading = isBigFont || isShortSpecial;
+    const endsWithPunctuation = /[.!?]$/.test(rawLineText);
+
+    let isHeading;
+
+    if (isNumericLine && isStrongHeading) {
+      isHeading = true;
+      titleBlockActive = true;
+      titleBlockCount = 1;
+    } else if (
+      titleBlockActive &&
+      titleBlockCount < TITLE_BLOCK_MAX_LINES &&
+      isShortLine &&
+      !endsWithPunctuation
+    ) {
+      isHeading = true;
+      titleBlockCount++;
+    } else {
+      isHeading = isStrongHeading;
+      titleBlockActive = false;
+      titleBlockCount = 0;
     }
 
-    if (previousItem) {
-      const prevY = previousItem.transform[5];
-      const currY = item.transform[5];
-      const yGap = Math.abs(prevY - currY);
-      const cleanResult = result.replace(/\*/g, "").trimEnd();
-      const endsWithSentenceEnd = /[.!?:]$/.test(cleanResult);
+    const indent = line.x - bodyLeftMargin;
+    const isIndented = indent > line.fontSize * 0.8;
 
-      if (yGap > 6) {
-        if (endsWithSentenceEnd) {
-          if (!result.endsWith("\n")) {
-            result += "\n\n";
-          }
-        } else {
-          if (result.endsWith("-")) {
-            result = result.slice(0, -1);
-          } else if (!result.endsWith(" ") && !result.endsWith("\n")) {
-            result += " ";
-          }
-        }
+    const isNewParagraph =
+      !previousLine || isHeading || previousWasHeading || isIndented;
+
+    if (isNewParagraph) {
+      paragraphStarts.push({ x: line.x, y: line.y });
+    }
+
+    if (previousLine) {
+      if (isNewParagraph) {
+        if (!result.endsWith("\n")) result += "\n\n";
       } else {
-        const previousEnd =
-          previousItem.transform[4] + (previousItem.width || 0);
-        const currentStart = item.transform[4];
-        const xGap = currentStart - previousEnd;
-
-        const currentClean = text.replace(/\*/g, "").trimStart();
-
-        if (
-          xGap > 1.5 &&
-          !result.endsWith(" ") &&
-          !result.endsWith("\n") &&
-          !/^[.,;:!?]/.test(currentClean)
-        ) {
+        if (result.endsWith("-")) {
+          result = result.slice(0, -1);
+        } else if (!result.endsWith(" ") && !result.endsWith("\n")) {
           result += " ";
         }
       }
     }
 
-    result += text;
-    previousItem = item;
+    let lineText = "";
+    let previousItem = null;
+
+    for (const item of line.items) {
+      let text = item.str;
+
+      const fontName = (item.fontName || "").toLowerCase();
+      const isBold =
+        fontName.includes("bold") ||
+        fontName.includes("black") ||
+        fontName.includes("heavy") ||
+        fontName.includes("semibold") ||
+        fontName.includes("demi");
+
+      if (isBold && !isHeading) text = `**${text}**`;
+
+      if (previousItem) {
+        const previousEnd =
+          previousItem.transform[4] + (previousItem.width || 0);
+        const currentStart = item.transform[4];
+        const xGap = currentStart - previousEnd;
+        const fontSize = fontSizeOf(item);
+        const wordSpaceThreshold = fontSize * 0.18;
+        const currentClean = text.replace(/\*/g, "").trimStart();
+
+        if (
+          xGap > wordSpaceThreshold &&
+          !lineText.endsWith(" ") &&
+          !/^[.,;:!?]/.test(currentClean)
+        ) {
+          lineText += " ";
+        }
+      }
+
+      lineText += text;
+      previousItem = item;
+    }
+
+    result += isHeading ? `@@${lineText.trim()}@@` : lineText;
+
+    previousLine = line;
+    previousWasHeading = isHeading;
   }
 
-  return result
+  const cleanText = result
     .replace(/\*\*\s*\*\*/g, "")
     .replace(/\*\*\*\*/g, "")
     .replace(/\s+([,.;:!?])/g, "$1")
@@ -158,6 +321,8 @@ function processTextItems(items) {
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  return { text: cleanText, paragraphStarts };
 }
 
 function extractImagesFromCanvas(canvas, viewport, operatorList) {
@@ -259,5 +424,114 @@ function cropImageFromCtm(canvas, ctm) {
 
   ctx.drawImage(canvas, minX, minY, width, height, 0, 0, width, height);
 
-  return cropCanvas.toDataURL("image/png");
+  return { src: cropCanvas.toDataURL("image/png"), y: minY };
+}
+
+export async function getParagraphDebugData(pdfDoc, pageNumber, scale = 1.5) {
+  const page = await pdfDoc.getPage(pageNumber);
+  const viewport = page.getViewport({ scale });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext("2d");
+  await page.render({ canvasContext: ctx, viewport }).promise;
+
+  const textContent = await page.getTextContent({
+    disableCombineTextItems: true,
+    includeMarkedContent: true,
+  });
+
+  const validItems = textContent.items.filter(
+    (item) => item.str && item.str.trim() !== "",
+  );
+
+  validItems.sort((a, b) => {
+    const yDiff = b.transform[5] - a.transform[5];
+    if (Math.abs(yDiff) > 2) return yDiff;
+    return a.transform[4] - b.transform[4];
+  });
+
+  function fontSizeOf(item) {
+    return Math.abs(item.transform[3]) || Math.abs(item.transform[0]) || 10;
+  }
+
+  // --- Passo 1: agrupar itens em linhas (mesma lógica de processTextItems) ---
+  const lines = [];
+  let currentLine = null;
+
+  for (const item of validItems) {
+    const y = item.transform[5];
+    const fontSize = fontSizeOf(item);
+
+    if (
+      currentLine &&
+      Math.abs(currentLine.y - y) <=
+        Math.max(fontSize, currentLine.fontSize) * 0.4
+    ) {
+      currentLine.items.push(item);
+    } else {
+      currentLine = { y, fontSize, x: item.transform[4], items: [item] };
+      lines.push(currentLine);
+    }
+  }
+
+  if (!lines.length) {
+    return {
+      imageDataUrl: canvas.toDataURL("image/png"),
+      width: viewport.width,
+      height: viewport.height,
+      breaks: [],
+    };
+  }
+
+  // --- Passo 2: moda da margem esquerda (mesma lógica de processTextItems) ---
+  const xCounts = new Map();
+  for (const line of lines) {
+    const roundedX = Math.round(line.x);
+    xCounts.set(roundedX, (xCounts.get(roundedX) || 0) + 1);
+  }
+
+  let bodyLeftMargin = lines[0].x;
+  let bestCount = 0;
+  for (const [x, count] of xCounts) {
+    if (count > bestCount) {
+      bestCount = count;
+      bodyLeftMargin = x;
+    }
+  }
+
+  // --- Passo 3: classificar cada linha (mesmos limiares de processTextItems) ---
+  const breaks = [];
+  let previousLine = null;
+
+  for (const line of lines) {
+    if (previousLine) {
+      const indent = line.x - bodyLeftMargin;
+      const isIndented = indent > line.fontSize * 0.8;
+
+      const yGap = Math.abs(previousLine.y - line.y);
+      const lineHeight = Math.max(line.fontSize, previousLine.fontSize);
+      const isBigVerticalGap = yGap > lineHeight * 1.8;
+
+      const isParagraphBreak = isIndented || isBigVerticalGap;
+
+      const [vx, vy] = viewport.convertToViewportPoint(line.x, line.y);
+
+      breaks.push({
+        type: isParagraphBreak ? "paragraph" : "line",
+        y: vy,
+        preview: line.items[0]?.str.slice(0, 24) || "",
+      });
+    }
+
+    previousLine = line;
+  }
+
+  return {
+    imageDataUrl: canvas.toDataURL("image/png"),
+    width: viewport.width,
+    height: viewport.height,
+    breaks,
+  };
 }

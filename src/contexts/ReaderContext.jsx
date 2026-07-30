@@ -169,6 +169,7 @@ export function ReaderProvider({ children }) {
 
         const rawSnippet = rawText.slice(start, end);
         const cleanSnippet = rawSnippet
+          .replace(/@@/g, "")
           .replace(/\*/g, "")
           .replace(/\s+/g, " ")
           .trim();
@@ -201,6 +202,7 @@ export function ReaderProvider({ children }) {
         totalPages,
         mode,
         setMode,
+        pdfDoc,
         openFile,
         openFileFromHistory,
         closeFile,
