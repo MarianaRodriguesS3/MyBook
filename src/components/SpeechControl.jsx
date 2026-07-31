@@ -26,6 +26,7 @@ const SpeechControl = forwardRef(function SpeechControl(
   const playingRef = useRef(playing);
   const pausedRef = useRef(false);
   const speakTimeoutRef = useRef(null);
+  const generationRef = useRef(0);
 
   useEffect(() => {
     playingRef.current = playing;
@@ -35,6 +36,24 @@ const SpeechControl = forwardRef(function SpeechControl(
     if (speakTimeoutRef.current) {
       clearTimeout(speakTimeoutRef.current);
       speakTimeoutRef.current = null;
+    }
+  }
+
+  function cancelSpeech() {
+    generationRef.current++;
+    currentUtterance.current = null;
+
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+
+    try {
+      synth.cancel();
+
+      if (synth.paused && synth.resume) {
+        synth.resume();
+      }
+    } catch (error) {
+      console.warn("Erro ao cancelar speechSynthesis:", error);
     }
   }
 
@@ -49,6 +68,7 @@ const SpeechControl = forwardRef(function SpeechControl(
     }
 
     const index = sentenceIndex.current;
+    const generation = generationRef.current;
     setActiveSentence(index);
 
     const text = sentences.current[index];
@@ -65,6 +85,10 @@ const SpeechControl = forwardRef(function SpeechControl(
     utterance.pitch = 1;
 
     utterance.onend = () => {
+      if (generation !== generationRef.current) {
+        return;
+      }
+
       if (!playingRef.current || pausedRef.current) {
         return;
       }
@@ -80,6 +104,10 @@ const SpeechControl = forwardRef(function SpeechControl(
     };
 
     utterance.onerror = (event) => {
+      if (generation !== generationRef.current) {
+        return;
+      }
+
       if (event.error === "canceled" || event.error === "interrupted") {
         return;
       }
@@ -126,14 +154,14 @@ const SpeechControl = forwardRef(function SpeechControl(
     }, 250);
   }
 
-  async function startReading(pageNumber, startIndex = 0) {
+  async function startReading(pageNumber, startIndex = null) {
     if (!speech) {
       return;
     }
 
     const samePageAndAlreadyLoaded =
       pageNumber === pageReading.current &&
-      startIndex === 0 &&
+      startIndex == null &&
       sentences.current.length > 0 &&
       (pausedRef.current || !playingRef.current);
 
@@ -163,11 +191,11 @@ const SpeechControl = forwardRef(function SpeechControl(
       return;
     }
 
-    if (pageNumber !== pageReading.current || startIndex !== 0) {
+    if (pageNumber !== pageReading.current || startIndex != null) {
       sentences.current = splitText(page.text);
-      sentenceIndex.current = Math.min(
-        Math.max(startIndex, 0),
-        sentences.current.length - 1,
+      sentenceIndex.current = Math.max(
+        Math.min(Math.max(startIndex ?? 0, 0), sentences.current.length - 1),
+        0,
       );
     } else if (sentences.current.length === 0) {
       sentences.current = splitText(page.text);
@@ -181,15 +209,7 @@ const SpeechControl = forwardRef(function SpeechControl(
     setPlaying(true);
 
     clearPendingSpeak();
-
-    const synth = window.speechSynthesis;
-    if (synth && synth.cancel) {
-      try {
-        synth.cancel();
-      } catch (error) {
-        console.warn("Erro ao cancelar speechSynthesis:", error);
-      }
-    }
+    cancelSpeech();
 
     speakTimeoutRef.current = setTimeout(() => {
       if (playingRef.current && !pausedRef.current) {
@@ -200,15 +220,8 @@ const SpeechControl = forwardRef(function SpeechControl(
 
   useImperativeHandle(ref, () => ({
     seekTo(pageNumber, sentenceIndexValue) {
-      const synth = window.speechSynthesis;
-
-      if (synth && (synth.speaking || synth.paused)) {
-        try {
-          synth.cancel();
-        } catch (error) {
-          console.warn("Erro ao cancelar speechSynthesis no seekTo:", error);
-        }
-      }
+      clearPendingSpeak();
+      cancelSpeech();
 
       startReading(pageNumber, sentenceIndexValue);
     },
@@ -281,15 +294,7 @@ const SpeechControl = forwardRef(function SpeechControl(
   useEffect(() => {
     return () => {
       clearPendingSpeak();
-
-      const synth = window.speechSynthesis;
-      if (synth) {
-        try {
-          synth.cancel();
-        } catch (error) {
-          console.warn("Erro ao limpar speechSynthesis:", error);
-        }
-      }
+      cancelSpeech();
 
       pausedRef.current = false;
     };
