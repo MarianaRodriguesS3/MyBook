@@ -76,7 +76,7 @@ const SpeechControl = forwardRef(function SpeechControl(
         if (playingRef.current && !pausedRef.current) {
           speakSentence();
         }
-      }, 50);
+      }, 60);
     };
 
     utterance.onerror = (event) => {
@@ -93,6 +93,39 @@ const SpeechControl = forwardRef(function SpeechControl(
     window.speechSynthesis.speak(utterance);
   }
 
+  function resumeReading() {
+    pausedRef.current = false;
+    playingRef.current = true;
+    setPlaying(true);
+
+    clearPendingSpeak();
+
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+
+    try {
+      if (synth.paused && synth.resume) {
+        synth.resume();
+      }
+    } catch (error) {
+      console.warn("Erro ao resumir speechSynthesis:", error);
+    }
+
+    speakTimeoutRef.current = setTimeout(() => {
+      if (!playingRef.current || pausedRef.current) {
+        return;
+      }
+
+      const currentSynth = window.speechSynthesis;
+
+      if (currentSynth.speaking || currentSynth.paused) {
+        return;
+      }
+
+      speakSentence();
+    }, 250);
+  }
+
   async function startReading(pageNumber, startIndex = 0) {
     if (!speech) {
       return;
@@ -105,25 +138,7 @@ const SpeechControl = forwardRef(function SpeechControl(
       (pausedRef.current || !playingRef.current);
 
     if (samePageAndAlreadyLoaded) {
-      pausedRef.current = false;
-      playingRef.current = true;
-      setPlaying(true);
-
-      clearPendingSpeak();
-
-      if (window.speechSynthesis.paused && window.speechSynthesis.resume) {
-        window.speechSynthesis.resume();
-        return;
-      }
-
-      window.speechSynthesis.cancel();
-
-      speakTimeoutRef.current = setTimeout(() => {
-        if (playingRef.current && !pausedRef.current) {
-          speakSentence();
-        }
-      }, 180);
-
+      resumeReading();
       return;
     }
 
@@ -166,7 +181,15 @@ const SpeechControl = forwardRef(function SpeechControl(
     setPlaying(true);
 
     clearPendingSpeak();
-    window.speechSynthesis.cancel();
+
+    const synth = window.speechSynthesis;
+    if (synth && synth.cancel) {
+      try {
+        synth.cancel();
+      } catch (error) {
+        console.warn("Erro ao cancelar speechSynthesis:", error);
+      }
+    }
 
     speakTimeoutRef.current = setTimeout(() => {
       if (playingRef.current && !pausedRef.current) {
@@ -176,12 +199,18 @@ const SpeechControl = forwardRef(function SpeechControl(
   }
 
   useImperativeHandle(ref, () => ({
-    seekTo(pageNumber, sentenceIndex) {
-      if (window.speechSynthesis.speaking || window.speechSynthesis.paused) {
-        window.speechSynthesis.cancel();
+    seekTo(pageNumber, sentenceIndexValue) {
+      const synth = window.speechSynthesis;
+
+      if (synth && (synth.speaking || synth.paused)) {
+        try {
+          synth.cancel();
+        } catch (error) {
+          console.warn("Erro ao cancelar speechSynthesis no seekTo:", error);
+        }
       }
 
-      startReading(pageNumber, sentenceIndex);
+      startReading(pageNumber, sentenceIndexValue);
     },
   }));
 
@@ -195,32 +224,20 @@ const SpeechControl = forwardRef(function SpeechControl(
 
       clearPendingSpeak();
 
-      if (window.speechSynthesis.pause) {
-        window.speechSynthesis.pause();
-      } else {
-        window.speechSynthesis.cancel();
+      const synth = window.speechSynthesis;
+      if (synth && synth.pause) {
+        try {
+          synth.pause();
+        } catch (error) {
+          console.warn("Erro ao pausar speechSynthesis:", error);
+        }
       }
 
       return;
     }
 
     if (pausedRef.current) {
-      pausedRef.current = false;
-      playingRef.current = true;
-      setPlaying(true);
-
-      clearPendingSpeak();
-
-      if (window.speechSynthesis.resume) {
-        window.speechSynthesis.resume();
-      } else {
-        speakTimeoutRef.current = setTimeout(() => {
-          if (playingRef.current && !pausedRef.current) {
-            speakSentence();
-          }
-        }, 180);
-      }
-
+      resumeReading();
       return;
     }
 
@@ -264,7 +281,16 @@ const SpeechControl = forwardRef(function SpeechControl(
   useEffect(() => {
     return () => {
       clearPendingSpeak();
-      window.speechSynthesis.cancel();
+
+      const synth = window.speechSynthesis;
+      if (synth) {
+        try {
+          synth.cancel();
+        } catch (error) {
+          console.warn("Erro ao limpar speechSynthesis:", error);
+        }
+      }
+
       pausedRef.current = false;
     };
   }, []);
