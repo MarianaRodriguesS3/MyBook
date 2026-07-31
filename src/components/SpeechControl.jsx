@@ -1,19 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { useSpeech } from "../contexts/SpeechContext";
 import { TextToSpeech } from "@capacitor-community/text-to-speech";
-
-function splitIntoParagraphs(text) {
-  if (!text) return [];
-
-  return text
-    .split(/\n+/) // separar por quebras de linha (parágrafos)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function estimateDurationMs(text) {
-  return Math.max(900, text.length * 70);
-}
+import { splitText } from "./PageText";
 
 const SpeechControl = forwardRef(function SpeechControl(
   {
@@ -38,6 +26,7 @@ const SpeechControl = forwardRef(function SpeechControl(
   const playingRef = useRef(playing);
   const pausedRef = useRef(false);
   const speakTimeoutRef = useRef(null);
+  const generationRef = useRef(0);
   const useNativeTtsRef = useRef(false);
   const currentPageRef = useRef(currentPage);
 
@@ -162,6 +151,8 @@ const SpeechControl = forwardRef(function SpeechControl(
   }
 
   async function stopSpeech() {
+    generationRef.current++;
+
     if (useNativeTtsRef.current) {
       try {
         await TextToSpeech.stop();
@@ -173,6 +164,10 @@ const SpeechControl = forwardRef(function SpeechControl(
     if (synth && synth.cancel) {
       try {
         synth.cancel();
+
+        if (synth.paused && synth.resume) {
+          synth.resume();
+        }
       } catch {}
     }
   }
@@ -188,6 +183,7 @@ const SpeechControl = forwardRef(function SpeechControl(
     }
 
     const index = paragraphIndex.current;
+    const generation = generationRef.current;
     const text = paragraphs.current[index];
 
     setActiveSentence(index);
@@ -205,6 +201,10 @@ const SpeechControl = forwardRef(function SpeechControl(
         useNativeTtsRef.current = false;
       }
 
+      if (generation !== generationRef.current) {
+        return;
+      }
+
       if (!playingRef.current || pausedRef.current) {
         return;
       }
@@ -212,14 +212,11 @@ const SpeechControl = forwardRef(function SpeechControl(
       paragraphIndex.current += 1;
 
       clearPendingSpeak();
-      speakTimeoutRef.current = setTimeout(
-        () => {
-          if (playingRef.current && !pausedRef.current) {
-            speakParagraph();
-          }
-        },
-        estimateDurationMs(text) + 200,
-      );
+      speakTimeoutRef.current = setTimeout(() => {
+        if (playingRef.current && !pausedRef.current) {
+          void speakParagraph();
+        }
+      }, 60);
 
       return;
     }
@@ -237,6 +234,10 @@ const SpeechControl = forwardRef(function SpeechControl(
     utterance.pitch = 1;
 
     utterance.onend = () => {
+      if (generation !== generationRef.current) {
+        return;
+      }
+
       if (!playingRef.current || pausedRef.current) {
         return;
       }
@@ -252,6 +253,10 @@ const SpeechControl = forwardRef(function SpeechControl(
     };
 
     utterance.onerror = (event) => {
+      if (generation !== generationRef.current) {
+        return;
+      }
+
       if (event.error === "canceled" || event.error === "interrupted") {
         return;
       }
@@ -292,10 +297,10 @@ const SpeechControl = forwardRef(function SpeechControl(
       return;
     }
 
-    paragraphs.current = splitIntoParagraphs(page.text);
-    paragraphIndex.current = Math.min(
-      Math.max(startIndex, 0),
-      paragraphs.current.length - 1,
+    paragraphs.current = splitText(page.text);
+    paragraphIndex.current = Math.max(
+      Math.min(Math.max(startIndex, 0), paragraphs.current.length - 1),
+      0,
     );
 
     pageReading.current = pageNumber;
@@ -334,7 +339,7 @@ const SpeechControl = forwardRef(function SpeechControl(
     }
 
     if (!paragraphs.current.length) {
-      paragraphs.current = splitIntoParagraphs(page.text);
+      paragraphs.current = splitText(page.text);
     }
 
     paragraphIndex.current = Math.min(
@@ -378,13 +383,8 @@ const SpeechControl = forwardRef(function SpeechControl(
 
   useImperativeHandle(ref, () => ({
     seekTo(pageNumber, paragraphIndexValue) {
-      const synth = window.speechSynthesis;
-
-      if (synth && (synth.speaking || synth.paused)) {
-        try {
-          synth.cancel();
-        } catch {}
-      }
+      clearPendingSpeak();
+      void stopSpeech();
 
       startReading(pageNumber, paragraphIndexValue);
     },
