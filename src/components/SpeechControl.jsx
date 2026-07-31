@@ -1,6 +1,6 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { useSpeech } from "../contexts/SpeechContext";
-import { splitText } from "./PageText"; // 🟢 Importando a função direto do PageText
+import { splitText } from "./PageText";
 
 const SpeechControl = forwardRef(function SpeechControl(
   {
@@ -25,13 +25,24 @@ const SpeechControl = forwardRef(function SpeechControl(
   const pageReading = useRef(null);
   const playingRef = useRef(playing);
   const pausedRef = useRef(false);
-  const isPausingRef = useRef(false);
+  const speakTimeoutRef = useRef(null);
 
   useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
 
+  function clearPendingSpeak() {
+    if (speakTimeoutRef.current) {
+      clearTimeout(speakTimeoutRef.current);
+      speakTimeoutRef.current = null;
+    }
+  }
+
   function speakSentence() {
+    if (!playingRef.current || pausedRef.current) {
+      return;
+    }
+
     if (sentenceIndex.current >= sentences.current.length) {
       onFinishPage(pageReading.current);
       return;
@@ -54,17 +65,15 @@ const SpeechControl = forwardRef(function SpeechControl(
     utterance.pitch = 1;
 
     utterance.onend = () => {
-      // Se foi um pause manual, bloqueia o avanço de frase
-      if (isPausingRef.current) {
-        isPausingRef.current = false;
+      if (!playingRef.current || pausedRef.current) {
         return;
       }
 
       sentenceIndex.current++;
 
-      // 🟢 Pequeno respiro de 50ms para impedir o travamento da Web Speech API entre frases
-      setTimeout(() => {
-        if (playingRef.current) {
+      clearPendingSpeak();
+      speakTimeoutRef.current = setTimeout(() => {
+        if (playingRef.current && !pausedRef.current) {
           speakSentence();
         }
       }, 50);
@@ -89,6 +98,35 @@ const SpeechControl = forwardRef(function SpeechControl(
       return;
     }
 
+    const samePageAndAlreadyLoaded =
+      pageNumber === pageReading.current &&
+      startIndex === 0 &&
+      sentences.current.length > 0 &&
+      (pausedRef.current || !playingRef.current);
+
+    if (samePageAndAlreadyLoaded) {
+      pausedRef.current = false;
+      playingRef.current = true;
+      setPlaying(true);
+
+      clearPendingSpeak();
+
+      if (window.speechSynthesis.paused && window.speechSynthesis.resume) {
+        window.speechSynthesis.resume();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      speakTimeoutRef.current = setTimeout(() => {
+        if (playingRef.current && !pausedRef.current) {
+          speakSentence();
+        }
+      }, 180);
+
+      return;
+    }
+
     const page = getPageContent(pageNumber);
 
     if (!page || !page.text || !page.text.trim()) {
@@ -110,24 +148,36 @@ const SpeechControl = forwardRef(function SpeechControl(
       return;
     }
 
-    window.speechSynthesis.cancel();
+    if (pageNumber !== pageReading.current || startIndex !== 0) {
+      sentences.current = splitText(page.text);
+      sentenceIndex.current = Math.min(
+        Math.max(startIndex, 0),
+        sentences.current.length - 1,
+      );
+    } else if (sentences.current.length === 0) {
+      sentences.current = splitText(page.text);
+    }
 
-    sentences.current = splitText(page.text);
-    sentenceIndex.current = Math.min(
-      Math.max(startIndex, 0),
-      sentences.current.length - 1,
-    );
     pageReading.current = pageNumber;
 
     setReadingPage(pageNumber);
+    pausedRef.current = false;
     playingRef.current = true;
     setPlaying(true);
-    speakSentence();
+
+    clearPendingSpeak();
+    window.speechSynthesis.cancel();
+
+    speakTimeoutRef.current = setTimeout(() => {
+      if (playingRef.current && !pausedRef.current) {
+        speakSentence();
+      }
+    }, 180);
   }
 
   useImperativeHandle(ref, () => ({
     seekTo(pageNumber, sentenceIndex) {
-      if (window.speechSynthesis.speaking) {
+      if (window.speechSynthesis.speaking || window.speechSynthesis.paused) {
         window.speechSynthesis.cancel();
       }
 
@@ -138,42 +188,45 @@ const SpeechControl = forwardRef(function SpeechControl(
   function toggle() {
     if (!speech) return;
 
-    // 1. SE ESTÁ TOCANDO: PAUSA
     if (playingRef.current) {
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.pause();
-      }
-
       playingRef.current = false;
       pausedRef.current = true;
       setPlaying(false);
+
+      clearPendingSpeak();
+
+      if (window.speechSynthesis.pause) {
+        window.speechSynthesis.pause();
+      } else {
+        window.speechSynthesis.cancel();
+      }
+
       return;
     }
 
-    // 2. SE ESTAVA PAUSADO: RETOMA (PLAY)
     if (pausedRef.current) {
       pausedRef.current = false;
       playingRef.current = true;
       setPlaying(true);
 
-      // Tenta retomar nativamente
-      window.speechSynthesis.resume();
+      clearPendingSpeak();
 
-      // Pequena verificação após 50ms para ver se o áudio realmente voltou a falar
-      setTimeout(() => {
-        // Se após tentar dar resume o motor do mobile NÃO estiver falando, força a recriação da frase
-        if (!window.speechSynthesis.speaking && playingRef.current) {
-          window.speechSynthesis.cancel();
-          speakSentence();
-        }
-      }, 50);
+      if (window.speechSynthesis.resume) {
+        window.speechSynthesis.resume();
+      } else {
+        speakTimeoutRef.current = setTimeout(() => {
+          if (playingRef.current && !pausedRef.current) {
+            speakSentence();
+          }
+        }, 180);
+      }
 
       return;
     }
 
-    // 3. PRIMEIRA EXECUÇÃO (PLAY DO ZERO)
-    window.speechSynthesis.cancel();
     pausedRef.current = false;
+    playingRef.current = true;
+    setPlaying(true);
     startReading(currentPage);
   }
 
@@ -197,8 +250,9 @@ const SpeechControl = forwardRef(function SpeechControl(
 
   useEffect(() => {
     if (readingPage != null && readingPage !== pageReading.current) {
-      if (playingRef.current) {
-        setTimeout(() => {
+      if (playingRef.current && !pausedRef.current) {
+        clearPendingSpeak();
+        speakTimeoutRef.current = setTimeout(() => {
           startReading(readingPage);
         }, 100);
       } else {
@@ -207,31 +261,9 @@ const SpeechControl = forwardRef(function SpeechControl(
     }
   }, [readingPage]);
 
-  // 🔒 Evita que a tela do celular apague durante a leitura
-  useEffect(() => {
-    let wakeLock = null;
-
-    if (playing && "wakeLock" in navigator) {
-      navigator.wakeLock
-        .request("screen")
-        .then((lock) => {
-          wakeLock = lock;
-        })
-        .catch((err) => {
-          console.warn("Wake Lock não ativado:", err);
-        });
-    }
-
-    return () => {
-      if (wakeLock) {
-        wakeLock.release().catch(() => {});
-      }
-    };
-  }, [playing]);
-
-  // 🛑 Cleanup na desmontagem do componente
   useEffect(() => {
     return () => {
+      clearPendingSpeak();
       window.speechSynthesis.cancel();
       pausedRef.current = false;
     };

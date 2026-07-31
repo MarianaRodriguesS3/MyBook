@@ -55,6 +55,10 @@ function Reader() {
   }
 
   async function findAndReadNextPage(startPage) {
+    if (!playing) {
+      return null;
+    }
+
     console.log(
       "PROCURANDO PÁGINA COM TEXTO A PARTIR DE:",
       startPage,
@@ -109,6 +113,10 @@ function Reader() {
   async function handleFinishPage(pageNumber) {
     setActiveSentence(null);
 
+    if (!playing) {
+      return;
+    }
+
     if (mode === "portrait") {
       await findAndReadNextPage(pageNumber + 1);
 
@@ -136,10 +144,12 @@ function Reader() {
 
         return;
       }
+
       await findAndReadNextPage(nextPair + 1);
 
       return;
     }
+
     setPlaying(false);
   }
 
@@ -147,6 +157,7 @@ function Reader() {
     if (playing) {
       return;
     }
+
     speechControlRef.current?.seekTo(pageNumber, sentenceIndex);
   }
 
@@ -156,7 +167,7 @@ function Reader() {
 
   function previousPage() {
     setActiveSentence(null);
-    setHighlight(null); // Limpa destaques ao navegar
+    setHighlight(null);
 
     const step = mode === "landscape" ? 2 : 1;
 
@@ -167,7 +178,7 @@ function Reader() {
 
   function nextPage() {
     setActiveSentence(null);
-    setHighlight(null); // Limpa destaques ao navegar
+    setHighlight(null);
 
     const step = mode === "landscape" ? 2 : 1;
 

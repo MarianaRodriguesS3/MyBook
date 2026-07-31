@@ -94,9 +94,9 @@ export function SpeechProvider({ children }) {
 
       if (selectedVoice) {
         utterance.voice = selectedVoice;
+        utterance.lang = selectedVoice.lang;
       }
 
-      window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
     }
   }
