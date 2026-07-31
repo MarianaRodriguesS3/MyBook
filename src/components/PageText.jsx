@@ -69,7 +69,7 @@ function renderInlineFormatting(str) {
 function buildParagraphBlocks(text) {
   if (!text) return [];
 
-  const rawParagraphs = text.split(/\n{2,}/);
+  const rawParagraphs = text.split(/\n+/);
   const blocks = [];
   let globalSentenceIndex = 0;
 
@@ -196,7 +196,7 @@ function PageText({
     return null;
   }
 
-  function renderParagraph(block, key) {
+  function renderParagraph(block, key, paragraphIndex) {
     const Wrapper = block.isHeading ? "div" : "p";
     const className = block.isHeading ? "page-heading" : "page-paragraph";
 
@@ -207,13 +207,16 @@ function PageText({
           if (!sentence) return null;
 
           const isSearchMatch = index === matchSentenceIndex;
+          const isActiveParagraph =
+            activeSentence != null &&
+            activeSentence === paragraphIndex;
 
           return (
             <span
               key={index}
               ref={isSearchMatch ? highlightRef : null}
               className={
-                (index === activeSentence ? "sentence active" : "sentence") +
+                (isActiveParagraph ? "sentence active" : "sentence") +
                 (isSearchMatch ? " sentence-search-match" : "") +
                 (clickable ? " sentence-clickable" : "")
               }
@@ -245,11 +248,12 @@ function PageText({
     }
 
     const block = paragraphBlocks[paragraphCursor];
+    const paragraphIndex = paragraphCursor;
     paragraphCursor++;
 
     if (!block) return null;
 
-    return renderParagraph(block, `p-${i}`);
+    return renderParagraph(block, `p-${i}`, paragraphIndex);
   });
 
   return (

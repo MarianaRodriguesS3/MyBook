@@ -1,6 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { useSpeech } from "../contexts/SpeechContext";
 import { TextToSpeech } from "@capacitor-community/text-to-speech";
+import { getParagraphIndexForSentenceIndex } from "./speechControlUtils";
 
 function splitIntoParagraphs(text) {
   if (!text) return [];
@@ -63,6 +64,14 @@ const SpeechControl = forwardRef(function SpeechControl(
       clearTimeout(speakTimeoutRef.current);
       speakTimeoutRef.current = null;
     }
+  }
+
+  function resetPlaybackState() {
+    clearPendingSpeak();
+    pausedRef.current = false;
+    playingRef.current = false;
+    setPlaying(false);
+    setActiveSentence(null);
   }
 
   function isNativeTtsAvailable() {
@@ -137,7 +146,7 @@ const SpeechControl = forwardRef(function SpeechControl(
       return;
     }
 
-    const synth = window.speechSynthesis;
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
     if (synth && synth.pause) {
       try {
         synth.pause();
@@ -153,7 +162,7 @@ const SpeechControl = forwardRef(function SpeechControl(
       return;
     }
 
-    const synth = window.speechSynthesis;
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
     if (synth && synth.resume) {
       try {
         synth.resume();
@@ -169,7 +178,7 @@ const SpeechControl = forwardRef(function SpeechControl(
       return;
     }
 
-    const synth = window.speechSynthesis;
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
     if (synth && synth.cancel) {
       try {
         synth.cancel();
@@ -183,6 +192,11 @@ const SpeechControl = forwardRef(function SpeechControl(
     }
 
     if (paragraphIndex.current >= paragraphs.current.length) {
+      clearPendingSpeak();
+      playingRef.current = false;
+      pausedRef.current = false;
+      setPlaying(false);
+      setActiveSentence(null);
       onFinishPage(pageReading.current);
       return;
     }
@@ -256,12 +270,15 @@ const SpeechControl = forwardRef(function SpeechControl(
         return;
       }
 
-      playingRef.current = false;
-      setPlaying(false);
-      setActiveSentence(null);
+      resetPlaybackState();
     };
 
-    window.speechSynthesis.speak(utterance);
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
+    if (synth && synth.speak) {
+      synth.speak(utterance);
+    } else {
+      resetPlaybackState();
+    }
   }
 
   function startReading(pageNumber, startIndex = 0) {
@@ -287,16 +304,23 @@ const SpeechControl = forwardRef(function SpeechControl(
         }
       }
 
-      playingRef.current = false;
-      setPlaying(false);
+      clearPendingSpeak();
+      void stopSpeech();
+      resetPlaybackState();
       return;
     }
 
-    paragraphs.current = splitIntoParagraphs(page.text);
-    paragraphIndex.current = Math.min(
-      Math.max(startIndex, 0),
-      paragraphs.current.length - 1,
-    );
+    const normalizedParagraphs = splitIntoParagraphs(page.text);
+    paragraphs.current = normalizedParagraphs;
+
+    const paragraphStartIndex =
+      normalizedParagraphs.length && Number.isInteger(startIndex) && startIndex >= 0
+        ? getParagraphIndexForSentenceIndex(page.text, startIndex)
+        : 0;
+
+    paragraphIndex.current = normalizedParagraphs.length
+      ? Math.min(Math.max(paragraphStartIndex, 0), normalizedParagraphs.length - 1)
+      : 0;
 
     pageReading.current = pageNumber;
 
