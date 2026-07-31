@@ -4,7 +4,8 @@ const MIN_FONT_SIZE = 9;
 const MAX_FONT_SIZE_PORTRAIT = 34;
 const MAX_FONT_SIZE_LANDSCAPE = 30;
 
-function splitText(text) {
+// 🟢 Exportada para ser reaproveitada no SpeechControl.jsx
+export function splitText(text) {
   if (!text) return [];
 
   const paragraphs = text.split(/\n{2,}/);
@@ -22,9 +23,11 @@ function splitText(text) {
       continue;
     }
 
+    // Dividir por pontuação de fim de frase (. ! ?)
     const parts = trimmed
       .split(/(?<=[.!?])\s+/)
-      .filter((item) => item.trim().length > 0);
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
 
     sentences.push(...parts);
   }
@@ -38,10 +41,11 @@ function locateSentenceIndex(text, sentences, charIndex) {
   let searchFrom = 0;
 
   for (let i = 0; i < sentences.length; i++) {
-    const start = text.indexOf(sentences[i], searchFrom);
+    const cleanSentence = sentences[i].replace(/\*\*/g, "");
+    const start = text.indexOf(cleanSentence, searchFrom);
 
     if (start === -1) continue;
-    const end = start + sentences[i].length;
+    const end = start + cleanSentence.length;
 
     if (charIndex >= start && charIndex < end) {
       return i;
@@ -62,56 +66,44 @@ function renderInlineFormatting(str) {
   });
 }
 
-function buildParagraphBlocks(text, sentences) {
+function buildParagraphBlocks(text) {
   if (!text) return [];
 
   const rawParagraphs = text.split(/\n{2,}/);
-  const paragraphs = [];
-  let searchFrom = 0;
+  const blocks = [];
+  let globalSentenceIndex = 0;
 
   for (const rawPara of rawParagraphs) {
     const trimmed = rawPara.trim();
     if (!trimmed) continue;
 
-    const start = text.indexOf(trimmed, searchFrom);
-    const safeStart = start === -1 ? searchFrom : start;
-    const end = safeStart + trimmed.length;
+    const isHeading = trimmed.startsWith("@@") && trimmed.endsWith("@@");
+    const cleanText = isHeading ? trimmed.slice(2, -2).trim() : trimmed;
 
-    paragraphs.push({
-      start: safeStart,
-      end,
-      isHeading: trimmed.startsWith("@@") && trimmed.endsWith("@@"),
-    });
+    if (!cleanText) continue;
 
-    searchFrom = end;
-  }
+    const blockIndices = [];
 
-  if (!paragraphs.length) return [];
+    if (isHeading) {
+      blockIndices.push(globalSentenceIndex);
+      globalSentenceIndex++;
+    } else {
+      const sentencesInPara = cleanText
+        .split(/(?<=[.!?])\s+/)
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
 
-  let sentSearchFrom = 0;
-  const sentenceOffsets = sentences.map((sentence) => {
-    const start = text.indexOf(sentence, sentSearchFrom);
-    const safeStart = start === -1 ? sentSearchFrom : start;
-    sentSearchFrom = safeStart + sentence.length;
-    return safeStart;
-  });
-
-  const blocks = paragraphs.map((p) => ({
-    isHeading: p.isHeading,
-    indices: [],
-  }));
-
-  let paraCursor = 0;
-
-  sentenceOffsets.forEach((offset, sentenceIndex) => {
-    while (
-      paraCursor < paragraphs.length - 1 &&
-      offset >= paragraphs[paraCursor].end
-    ) {
-      paraCursor++;
+      for (let i = 0; i < sentencesInPara.length; i++) {
+        blockIndices.push(globalSentenceIndex);
+        globalSentenceIndex++;
+      }
     }
-    blocks[paraCursor].indices.push(sentenceIndex);
-  });
+
+    blocks.push({
+      isHeading,
+      indices: blockIndices,
+    });
+  }
 
   return blocks;
 }
@@ -129,7 +121,7 @@ function PageText({
   const containerRef = useRef(null);
   const highlightRef = useRef(null);
   const sentences = splitText(text);
-  const paragraphBlocks = buildParagraphBlocks(text, sentences);
+  const paragraphBlocks = buildParagraphBlocks(text);
 
   const matchSentenceIndex = searchHighlight
     ? locateSentenceIndex(text, sentences, searchHighlight.charIndex)
@@ -149,8 +141,6 @@ function PageText({
 
       el.style.lineHeight = "1.35";
 
-      // altura ocupada pelas imagens não muda com o tamanho da fonte,
-      // então mede-se uma vez e desconta do espaço disponível pro texto
       const imageElements = el.querySelectorAll("img");
       let imagesHeight = 0;
       imageElements.forEach((img) => {
@@ -214,6 +204,8 @@ function PageText({
       <Wrapper key={key} className={className}>
         {block.indices.map((index) => {
           const sentence = sentences[index];
+          if (!sentence) return null;
+
           const isSearchMatch = index === matchSentenceIndex;
 
           return (

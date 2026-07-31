@@ -1,37 +1,6 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { useSpeech } from "../contexts/SpeechContext";
-
-function splitText(text) {
-  if (!text) return [];
-
-  const paragraphs = text.split(/\n{2,}/);
-  const sentences = [];
-
-  for (const rawParagraph of paragraphs) {
-    const trimmed = rawParagraph.trim();
-    if (!trimmed) continue;
-
-    const isHeading = trimmed.startsWith("@@") && trimmed.endsWith("@@");
-    const clean = (isHeading ? trimmed.slice(2, -2) : trimmed)
-      .replace(/\*\*/g, "")
-      .trim();
-
-    if (!clean) continue;
-
-    if (isHeading) {
-      sentences.push(clean);
-      continue;
-    }
-
-    const parts = clean
-      .split(/(?<=[.!?])\s+/)
-      .filter((item) => item.trim().length > 0);
-
-    sentences.push(...parts);
-  }
-
-  return sentences;
-}
+import { splitText } from "./PageText"; // 🟢 Importando a função direto do PageText
 
 const SpeechControl = forwardRef(function SpeechControl(
   {
@@ -49,13 +18,14 @@ const SpeechControl = forwardRef(function SpeechControl(
   },
   ref,
 ) {
-  const { speech } = useSpeech();
+  const { speech, selectedVoice } = useSpeech();
   const currentUtterance = useRef(null);
   const sentenceIndex = useRef(0);
   const sentences = useRef([]);
   const pageReading = useRef(null);
   const playingRef = useRef(playing);
   const pausedRef = useRef(false);
+  const isPausingRef = useRef(false);
 
   useEffect(() => {
     playingRef.current = playing;
@@ -64,24 +34,40 @@ const SpeechControl = forwardRef(function SpeechControl(
   function speakSentence() {
     if (sentenceIndex.current >= sentences.current.length) {
       onFinishPage(pageReading.current);
-
       return;
     }
 
     const index = sentenceIndex.current;
-
     setActiveSentence(index);
 
     const text = sentences.current[index];
     const utterance = new SpeechSynthesisUtterance(text);
 
-    utterance.lang = "pt-BR";
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang;
+    } else {
+      utterance.lang = "pt-BR";
+    }
+
     utterance.rate = 1;
     utterance.pitch = 1;
 
     utterance.onend = () => {
+      // Se foi um pause manual, bloqueia o avanço de frase
+      if (isPausingRef.current) {
+        isPausingRef.current = false;
+        return;
+      }
+
       sentenceIndex.current++;
-      speakSentence();
+
+      // 🟢 Pequeno respiro de 50ms para impedir o travamento da Web Speech API entre frases
+      setTimeout(() => {
+        if (playingRef.current) {
+          speakSentence();
+        }
+      }, 50);
     };
 
     utterance.onerror = (event) => {
@@ -99,25 +85,13 @@ const SpeechControl = forwardRef(function SpeechControl(
   }
 
   async function startReading(pageNumber, startIndex = 0) {
-    /*
-      Portão único: nenhuma fala começa por aqui se o modo
-      fala estiver desativado no menu — não importa se quem
-      chamou foi o botão de play, um clique numa frase (seekTo)
-      ou a continuação automática pra próxima página.
-    */
     if (!speech) {
       return;
     }
 
-    console.log("Página recebida no Speech:", pageNumber);
-
     const page = getPageContent(pageNumber);
 
-    console.log("Conteúdo encontrado no cache:", page);
-
-    if (!page || !page.text || page.text.trim() === "") {
-      console.log("PÁGINA SEM TEXTO:", pageNumber);
-
+    if (!page || !page.text || !page.text.trim()) {
       if (
         mode === "landscape" &&
         pageNumber === currentPage &&
@@ -126,20 +100,13 @@ const SpeechControl = forwardRef(function SpeechControl(
         const rightPage = getPageContent(currentPage + 1);
 
         if (rightPage && rightPage.text && rightPage.text.trim()) {
-          console.log(
-            "PÁGINA DIREITA DO PAR TEM TEXTO, LENDO:",
-            currentPage + 1,
-          );
-
           startReading(currentPage + 1);
-
           return;
         }
       }
 
       playingRef.current = false;
       setPlaying(false);
-
       return;
     }
 
@@ -153,9 +120,7 @@ const SpeechControl = forwardRef(function SpeechControl(
     pageReading.current = pageNumber;
 
     setReadingPage(pageNumber);
-
     playingRef.current = true;
-
     setPlaying(true);
     speakSentence();
   }
@@ -176,28 +141,33 @@ const SpeechControl = forwardRef(function SpeechControl(
     // 1. SE ESTÁ TOCANDO: PAUSA
     if (playingRef.current) {
       if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.pause(); // Pausa nativa (não reseta a frase)
+        window.speechSynthesis.pause();
       }
+
       playingRef.current = false;
       pausedRef.current = true;
       setPlaying(false);
       return;
     }
 
-    // 2. SE ESTAVA PAUSADO: RETOMA (RESUME)
+    // 2. SE ESTAVA PAUSADO: RETOMA (PLAY)
     if (pausedRef.current) {
       pausedRef.current = false;
       playingRef.current = true;
       setPlaying(true);
 
-      // Se a síntese estiver oficialmente pausada, resume
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
-      // Se por algum motivo o navegador perdeu o estado de pause mas ainda não está falando
-      else if (!window.speechSynthesis.speaking) {
-        speakSentence();
-      }
+      // Tenta retomar nativamente
+      window.speechSynthesis.resume();
+
+      // Pequena verificação após 50ms para ver se o áudio realmente voltou a falar
+      setTimeout(() => {
+        // Se após tentar dar resume o motor do mobile NÃO estiver falando, força a recriação da frase
+        if (!window.speechSynthesis.speaking && playingRef.current) {
+          window.speechSynthesis.cancel();
+          speakSentence();
+        }
+      }, 50);
+
       return;
     }
 
@@ -237,7 +207,7 @@ const SpeechControl = forwardRef(function SpeechControl(
     }
   }, [readingPage]);
 
-  // 🔒 Mantenha a tela acesa no celular/PWA enquanto o leitor estiver tocando
+  // 🔒 Evita que a tela do celular apague durante a leitura
   useEffect(() => {
     let wakeLock = null;
 
@@ -248,7 +218,7 @@ const SpeechControl = forwardRef(function SpeechControl(
           wakeLock = lock;
         })
         .catch((err) => {
-          console.warn("Wake Lock não pôde ser ativado:", err);
+          console.warn("Wake Lock não ativado:", err);
         });
     }
 
@@ -259,7 +229,7 @@ const SpeechControl = forwardRef(function SpeechControl(
     };
   }, [playing]);
 
-  // 🛑 Cleanup de áudio na desmontagem do componente
+  // 🛑 Cleanup na desmontagem do componente
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
