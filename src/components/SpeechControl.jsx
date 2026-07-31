@@ -171,34 +171,37 @@ const SpeechControl = forwardRef(function SpeechControl(
   }));
 
   function toggle() {
-    if (!speech) {
-      return;
-    }
+    if (!speech) return;
 
+    // 1. SE ESTÁ TOCANDO: PAUSA
     if (playingRef.current) {
-      // "pausa": cancela o áudio, mas mantém a posição (sentenceIndex não avança
-      // porque cancel() não dispara onend)
-      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause(); // Pausa nativa (não reseta a frase)
+      }
       playingRef.current = false;
       pausedRef.current = true;
       setPlaying(false);
       return;
     }
 
-    if (
-      pausedRef.current &&
-      pageReading.current != null &&
-      sentences.current.length > 0
-    ) {
-      // "retomar": re-sintetiza a partir da mesma frase, sem depender do
-      // resume() nativo (instável em navegadores/WebView mobile)
+    // 2. SE ESTAVA PAUSADO: RETOMA (RESUME)
+    if (pausedRef.current) {
       pausedRef.current = false;
       playingRef.current = true;
       setPlaying(true);
-      speakSentence();
+
+      // Se a síntese estiver oficialmente pausada, resume
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      // Se por algum motivo o navegador perdeu o estado de pause mas ainda não está falando
+      else if (!window.speechSynthesis.speaking) {
+        speakSentence();
+      }
       return;
     }
 
+    // 3. PRIMEIRA EXECUÇÃO (PLAY DO ZERO)
     window.speechSynthesis.cancel();
     pausedRef.current = false;
     startReading(currentPage);
@@ -234,6 +237,29 @@ const SpeechControl = forwardRef(function SpeechControl(
     }
   }, [readingPage]);
 
+  // 🔒 Mantenha a tela acesa no celular/PWA enquanto o leitor estiver tocando
+  useEffect(() => {
+    let wakeLock = null;
+
+    if (playing && "wakeLock" in navigator) {
+      navigator.wakeLock
+        .request("screen")
+        .then((lock) => {
+          wakeLock = lock;
+        })
+        .catch((err) => {
+          console.warn("Wake Lock não pôde ser ativado:", err);
+        });
+    }
+
+    return () => {
+      if (wakeLock) {
+        wakeLock.release().catch(() => {});
+      }
+    };
+  }, [playing]);
+
+  // 🛑 Cleanup de áudio na desmontagem do componente
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
