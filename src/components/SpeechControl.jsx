@@ -8,7 +8,7 @@ function splitIntoParagraphs(text) {
 
   return text
     .split(/\n+/) // separar por quebras de linha (parágrafos)
-    .map((item) => item.trim())
+    .map((item) => item.replace(/@@/g, "").trim())
     .filter(Boolean);
 }
 
