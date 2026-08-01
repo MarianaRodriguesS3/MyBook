@@ -69,7 +69,7 @@ function ReaderBook({
   previousPage,
   nextPage,
 }) {
-  const clickable = !playing;
+  const clickable = true;
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const touchStartY = useRef(0);

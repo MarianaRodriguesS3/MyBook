@@ -30,10 +30,15 @@ function Reader() {
   const [activeSentence, setActiveSentence] = useState(null);
   const speechControlRef = useRef(null);
   const totalPagesRef = useRef(totalPages);
+  const playingRef = useRef(playing);
 
   useEffect(() => {
     totalPagesRef.current = totalPages;
   }, [totalPages]);
+
+  useEffect(() => {
+    playingRef.current = playing;
+  }, [playing]);
 
   useEffect(() => {
     if (mode === "landscape") {
@@ -55,7 +60,28 @@ function Reader() {
   }
 
   async function findAndReadNextPage(startPage) {
-    if (!playing) {
+    if (!playingRef.current) {
+      return null;
+    }
+
+    const targetPage = await loadPage(startPage);
+
+    if (!hasReadableText(targetPage)) {
+      let next = startPage + 1;
+
+      while (next <= totalPagesRef.current) {
+        const content = await loadPage(next);
+
+        if (hasReadableText(content)) {
+          setCurrentPage(next);
+          setReadingPage(next);
+          return next;
+        }
+
+        next += 1;
+      }
+
+      setPlaying(false);
       return null;
     }
 
@@ -113,26 +139,34 @@ function Reader() {
   async function handleFinishPage(pageNumber) {
     setActiveSentence(null);
 
-    if (!playing) {
+    if (!playingRef.current) {
       return;
     }
 
     if (mode === "portrait") {
-      await findAndReadNextPage(pageNumber + 1);
+      const nextPage = await findAndReadNextPage(pageNumber + 1);
+
+      if (nextPage != null) {
+        setCurrentPage(nextPage);
+        setReadingPage(nextPage);
+      }
 
       return;
     }
 
+    // Landscape: par de páginas é currentPage (esquerda) e currentPage+1 (direita).
+    // Terminou a página esquerda → lê a direita sem mover a tela (não muda currentPage).
     if (pageNumber === currentPage && currentPage + 1 <= totalPages) {
       const rightContent = await loadPage(currentPage + 1);
 
       if (hasReadableText(rightContent)) {
         setReadingPage(currentPage + 1);
-
+        // currentPage NÃO muda — as duas páginas continuam visíveis
         return;
       }
     }
 
+    // Terminou a página direita (ou esquerda sem direita legível) → avança 2 páginas
     const nextPair = currentPage + 2;
 
     if (nextPair <= totalPages) {
@@ -154,10 +188,6 @@ function Reader() {
   }
 
   function handleSentenceClick(pageNumber, sentenceIndex) {
-    if (playing) {
-      return;
-    }
-
     speechControlRef.current?.seekTo(pageNumber, sentenceIndex);
   }
 
@@ -224,7 +254,6 @@ function Reader() {
         ref={speechControlRef}
         currentPage={currentPage}
         getPageContent={getPageContent}
-        loadPage={loadPage}
         mode={mode}
         totalPages={totalPages}
         playing={playing}

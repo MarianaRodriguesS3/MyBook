@@ -207,6 +207,7 @@ function PageText({
           if (!sentence) return null;
 
           const isSearchMatch = index === matchSentenceIndex;
+          // activeSentence é índice de parágrafo (vindo do SpeechControl)
           const isActiveParagraph =
             activeSentence != null &&
             activeSentence === paragraphIndex;

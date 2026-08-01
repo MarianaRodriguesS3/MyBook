@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      injectRegister: "auto",
       includeAssets: ["favicon.ico", "apple-touch-icon.png"],
       manifest: {
         name: "MyBook — Leitor de PDF",
@@ -51,9 +52,10 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // deixa os arquivos da leitura (PDFs abertos, thumbnails do
-        // histórico) funcionando offline depois da primeira visita
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // Ativa o novo SW imediatamente sem esperar fechar todas as abas
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],
