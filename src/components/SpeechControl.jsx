@@ -58,6 +58,13 @@ const SpeechControl = forwardRef(function SpeechControl(
 
   useEffect(() => {
     useNativeTtsRef.current = isNativeTtsAvailable();
+
+    console.log("[DEBUG] Capacitor:", window.Capacitor);
+    console.log(
+      "[DEBUG] Plataforma nativa:",
+      window.Capacitor?.isNativePlatform?.(),
+    );
+
     log("native TTS disponível?", useNativeTtsRef.current);
   }, []);
 
@@ -181,15 +188,16 @@ const SpeechControl = forwardRef(function SpeechControl(
   async function pauseSpeech() {
     if (useNativeTtsRef.current) {
       try {
-        await TextToSpeech.stop();
+        await TextToSpeech.pause();
       } catch {}
       return;
     }
 
-    const synth = window.speechSynthesis;
-
-    if (synth?.pause) {
-      synth.pause();
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
+    if (synth && synth.pause) {
+      try {
+        synth.pause();
+      } catch {}
     }
   }
 
@@ -424,8 +432,12 @@ const SpeechControl = forwardRef(function SpeechControl(
 
     setActiveSentence(paragraphIndex.current);
 
-    const sessionId = playbackSessionRef.current;
+    if (speechActiveRef.current) {
+      void resumeSpeech();
+      return;
+    }
 
+    const sessionId = playbackSessionRef.current;
     speakTimeoutRef.current = setTimeout(() => {
       if (playingRef.current && !pausedRef.current) {
         void speakParagraph(sessionId);
@@ -441,8 +453,6 @@ const SpeechControl = forwardRef(function SpeechControl(
     if (playingRef.current) {
       playingRef.current = false;
       pausedRef.current = true;
-      speechActiveRef.current = false;
-
       setPlaying(false);
 
       clearPendingSpeak();
