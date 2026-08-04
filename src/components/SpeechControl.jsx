@@ -83,7 +83,11 @@ const SpeechControl = forwardRef(function SpeechControl(
   }
 
   function scheduleNextParagraph(sessionId, delay = 120) {
-    if (sessionId !== playbackSessionRef.current || !playingRef.current || pausedRef.current) {
+    if (
+      sessionId !== playbackSessionRef.current ||
+      !playingRef.current ||
+      pausedRef.current
+    ) {
       return;
     }
 
@@ -100,7 +104,11 @@ const SpeechControl = forwardRef(function SpeechControl(
 
     clearPendingSpeak();
     speakTimeoutRef.current = setTimeout(() => {
-      if (sessionId === playbackSessionRef.current && playingRef.current && !pausedRef.current) {
+      if (
+        sessionId === playbackSessionRef.current &&
+        playingRef.current &&
+        !pausedRef.current
+      ) {
         void speakParagraph(sessionId);
       }
     }, delay);
@@ -173,16 +181,15 @@ const SpeechControl = forwardRef(function SpeechControl(
   async function pauseSpeech() {
     if (useNativeTtsRef.current) {
       try {
-        await TextToSpeech.pause();
+        await TextToSpeech.stop();
       } catch {}
       return;
     }
 
-    const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
-    if (synth && synth.pause) {
-      try {
-        synth.pause();
-      } catch {}
+    const synth = window.speechSynthesis;
+
+    if (synth?.pause) {
+      synth.pause();
     }
   }
 
@@ -219,7 +226,11 @@ const SpeechControl = forwardRef(function SpeechControl(
   }
 
   async function speakParagraph(sessionId = playbackSessionRef.current) {
-    if (sessionId !== playbackSessionRef.current || !playingRef.current || pausedRef.current) {
+    if (
+      sessionId !== playbackSessionRef.current ||
+      !playingRef.current ||
+      pausedRef.current
+    ) {
       return;
     }
 
@@ -263,7 +274,11 @@ const SpeechControl = forwardRef(function SpeechControl(
         useNativeTtsRef.current = false;
       }
 
-      if (sessionId !== playbackSessionRef.current || !playingRef.current || pausedRef.current) {
+      if (
+        sessionId !== playbackSessionRef.current ||
+        !playingRef.current ||
+        pausedRef.current
+      ) {
         return;
       }
 
@@ -285,7 +300,11 @@ const SpeechControl = forwardRef(function SpeechControl(
     utterance.pitch = 1;
 
     utterance.onend = () => {
-      if (sessionId !== playbackSessionRef.current || !playingRef.current || pausedRef.current) {
+      if (
+        sessionId !== playbackSessionRef.current ||
+        !playingRef.current ||
+        pausedRef.current
+      ) {
         return;
       }
 
@@ -346,12 +365,17 @@ const SpeechControl = forwardRef(function SpeechControl(
     const sessionId = nextPlaybackSession();
 
     const paragraphStartIndex =
-      normalizedParagraphs.length && Number.isInteger(startIndex) && startIndex >= 0
+      normalizedParagraphs.length &&
+      Number.isInteger(startIndex) &&
+      startIndex >= 0
         ? getParagraphIndexForSentenceIndex(page.text, startIndex)
         : 0;
 
     paragraphIndex.current = normalizedParagraphs.length
-      ? Math.min(Math.max(paragraphStartIndex, 0), normalizedParagraphs.length - 1)
+      ? Math.min(
+          Math.max(paragraphStartIndex, 0),
+          normalizedParagraphs.length - 1,
+        )
       : 0;
 
     pageReading.current = pageNumber;
@@ -400,12 +424,8 @@ const SpeechControl = forwardRef(function SpeechControl(
 
     setActiveSentence(paragraphIndex.current);
 
-    if (speechActiveRef.current) {
-      void resumeSpeech();
-      return;
-    }
-
     const sessionId = playbackSessionRef.current;
+
     speakTimeoutRef.current = setTimeout(() => {
       if (playingRef.current && !pausedRef.current) {
         void speakParagraph(sessionId);
@@ -421,6 +441,8 @@ const SpeechControl = forwardRef(function SpeechControl(
     if (playingRef.current) {
       playingRef.current = false;
       pausedRef.current = true;
+      speechActiveRef.current = false;
+
       setPlaying(false);
 
       clearPendingSpeak();
