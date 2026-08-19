@@ -87,8 +87,8 @@
   object-fit: contain;
   border-radius: 4px;
   flex: 0 0 auto;
-  margin-left: auto; /* <--- Centraliza à esquerda */
-  margin-right: auto; /* <--- Centraliza à direita */
+  margin-left: auto;
+  margin-right: auto;
   margin-bottom: 12px;
 }
 
@@ -105,7 +105,6 @@
   font-size: 22px;
 }
 
-/* Destaque de Frases e Busca */
 .sentence {
   display: inline;
   transition:

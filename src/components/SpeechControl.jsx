@@ -2,17 +2,6 @@ import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { useSpeech } from "../contexts/SpeechContext";
 import { TextToSpeech } from "@capacitor-community/text-to-speech";
 
-/* ==========================================================================
-   FUNÇÕES UTILITÁRIAS DE TEXTO E CONVERSÃO DE ÍNDICES
-   ========================================================================== */
-
-// 🟢 Mesmo critério de parágrafo do PageText.jsx: só quebra em \n{2,}
-// (duas ou mais quebras de linha = parágrafo de verdade). Usar /\n+/
-// aqui (como nas versões anteriores) faz cada linha da extração do PDF
-// virar um "parágrafo" próprio, o que já causou bug de resume voltando
-// pro início errado — por isso as 3 funções abaixo (split e as duas
-// conversões) usam TODAS o mesmo /\n{2,}/, senão os índices de uma não
-// batem com os índices da outra.
 function splitIntoParagraphs(text) {
   if (!text) return [];
 
@@ -22,8 +11,6 @@ function splitIntoParagraphs(text) {
     .filter(Boolean);
 }
 
-// Divide o texto em frases individuais — mesma lógica usada pelo
-// PageText pra desenhar/destacar cada frase clicável.
 export function splitIntoSentences(text) {
   if (!text) return [];
 
@@ -50,10 +37,6 @@ export function splitIntoSentences(text) {
   return result;
 }
 
-// Dado um índice GLOBAL de frase (o mesmo que PageText usa pra
-// destacar/clicar cada frase), devolve o índice do parágrafo que a
-// contém — usado quando o clique manda uma frase e precisamos saber
-// de qual parágrafo começar a falar.
 export function getParagraphIndexForSentenceIndex(text, sentenceIndex) {
   if (!text || sentenceIndex == null || sentenceIndex < 0) return 0;
 
@@ -87,12 +70,6 @@ export function getParagraphIndexForSentenceIndex(text, sentenceIndex) {
   return Math.max(0, paragraphCursor - 1);
 }
 
-// Caminho inverso: dado um índice de PARÁGRAFO, devolve o índice
-// global da primeira frase daquele parágrafo. Necessário pra quando o
-// clique manda um índice de parágrafo (não de frase) — sem essa
-// conversão, um índice de parágrafo pequeno era interpretado como se
-// fosse a N-ésima frase da página inteira, apontando pro parágrafo
-// errado (a causa do bug "clica aqui, grifa lá").
 export function getSentenceIndexForParagraphIndex(text, paragraphIndex) {
   if (!text || paragraphIndex == null || paragraphIndex <= 0) return 0;
 
@@ -127,10 +104,6 @@ function estimateDurationMs(text) {
   return Math.max(900, text.length * 70);
 }
 
-/* ==========================================================================
-   COMPONENTE PRINCIPAL: SpeechControl
-   ========================================================================== */
-
 const SpeechControl = forwardRef(function SpeechControl(
   {
     currentPage,
@@ -156,12 +129,6 @@ const SpeechControl = forwardRef(function SpeechControl(
   const speakTimeoutRef = useRef(null);
   const useNativeTtsRef = useRef(false);
   const currentPageRef = useRef(currentPage);
-
-  // 🟢 Controle de sessão: cada chamada de startReading gera um novo
-  // sessionId. Callbacks assíncronos (onend, promises do TTS nativo)
-  // só têm efeito se ainda pertencerem à sessão atual — evita que uma
-  // fala "atrasada" de uma leitura antiga interfira numa nova (troca
-  // rápida de página, por exemplo).
   const playbackSessionRef = useRef(0);
   const speechActiveRef = useRef(false);
 
@@ -224,12 +191,6 @@ const SpeechControl = forwardRef(function SpeechControl(
     return null;
   }
 
-  // 🟢 Diferencia explicitamente candidatos que são índice de FRASE
-  // (retornados direto) dos que são índice de PARÁGRAFO (convertidos
-  // via getSentenceIndexForParagraphIndex antes de retornar). Antes
-  // isso tudo caía numa lista única sem distinção de unidade — é
-  // exatamente essa mistura que causava clicar num lugar e destacar
-  // outro.
   function resolveRequestedSentenceIndex(event) {
     const detail = event?.detail;
     const page = getPageContent(currentPageRef.current);
@@ -237,7 +198,6 @@ const SpeechControl = forwardRef(function SpeechControl(
 
     if (detail !== null && detail !== undefined) {
       if (typeof detail === "number" || typeof detail === "string") {
-        // valor "cru" sem contexto: assume índice de frase (comportamento antigo)
         return parseRequestedIndex(detail);
       }
 
@@ -462,10 +422,6 @@ const SpeechControl = forwardRef(function SpeechControl(
     }
   }
 
-  // Início "do zero": troca de página, clique numa frase, primeiro
-  // play. startIndex é sempre um índice GLOBAL DE FRASE (nunca de
-  // parágrafo) — quem chama isso já deve ter feito a conversão certa
-  // via getSentenceIndexForParagraphIndex, se necessário.
   function startReading(pageNumber, startIndex = 0) {
     if (!speech) return;
 
@@ -521,11 +477,6 @@ const SpeechControl = forwardRef(function SpeechControl(
 
     clearPendingSpeak();
 
-    // 🟢 Espera o stop terminar de verdade antes de agendar a próxima
-    // fala — sem isso (stop "fire-and-forget"), o speak() seguinte
-    // pode ser disparado em cima de um stop ainda em andamento e ser
-    // ignorado silenciosamente pelo motor de fala, principalmente em
-    // mobile.
     (async () => {
       await stopSpeech();
 
@@ -564,10 +515,6 @@ const SpeechControl = forwardRef(function SpeechControl(
 
     setActiveSentence(paragraphIndex.current);
 
-    // Se a fala ainda estava "ativa" (só pausada de verdade via
-    // pause()), retoma a MESMA utterance no ponto exato — sem
-    // recriar nada. Só recomeça o parágrafo do zero se, por algum
-    // motivo, nada estava tocando quando pausou.
     if (speechActiveRef.current) {
       void resumeSpeech();
       return;
@@ -607,10 +554,6 @@ const SpeechControl = forwardRef(function SpeechControl(
   }
 
   useImperativeHandle(ref, () => ({
-    // sentenceIndexValue: índice GLOBAL DE FRASE, o mesmo que
-    // PageText usa pra destacar/pesquisar. Se quem chama isso só tem
-    // um índice de PARÁGRAFO, converte com getSentenceIndexForParagraphIndex
-    // antes de chamar — nunca passe um índice de parágrafo direto aqui.
     seekTo(pageNumber, sentenceIndexValue) {
       const synth =
         typeof window !== "undefined" ? window.speechSynthesis : null;

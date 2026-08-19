@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">mybook</string>
+    <string name="title_activity_main">mybook</string>
+    <string name="package_name">com.mybook.reader</string>
+    <string name="custom_url_scheme">com.mybook.reader</string>
+</resources>

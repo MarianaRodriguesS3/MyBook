@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  base: "/MyBook/",
+  base: process.env.CAPACITOR_BUILD ? "./" : "/MyBook/",
   plugins: [
     react(),
     VitePWA({
@@ -17,12 +17,8 @@ export default defineConfig({
           "Leitor de PDF com leitura em voz alta, histórico e temas.",
         start_url: "/MyBook/",
         scope: "/MyBook/",
-        // "standalone" tira a barra de endereço quando aberto pelo
-        // ícone instalado — é isso que dá a "cara de app"
         display: "standalone",
-        // cor de fundo mostrada na tela de splash, antes do app carregar
         background_color: "#fbf5e6",
-        // cor da barra de status/moldura do sistema operacional
         theme_color: "#efe2c2",
         icons: [
           {
@@ -53,7 +49,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        // Ativa o novo SW imediatamente sem esperar fechar todas as abas
         skipWaiting: true,
         clientsClaim: true,
       },

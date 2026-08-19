@@ -31,7 +31,6 @@ body {
   }
 }
 
-/* Celulares */
 @media (max-width: 768px) {
   html,
   body,
@@ -43,6 +42,10 @@ body {
 
   body {
     font-size: 15px;
+  }
+
+  body.capacitor {
+    padding-top: 10%;
   }
 }
 

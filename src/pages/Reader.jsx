@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useReader } from "../contexts/ReaderContext";
 import ReaderBook from "../components/ReaderBook";
 import SpeechControl from "../components/SpeechControl";
+import SpeechControlMobile from "../components/SpeechControlMobile";
 import FooterReader from "../components/FooterReader";
 import "./Reader.css";
 
 function Reader() {
   const { t } = useLanguage();
   const { theme } = useTheme();
+
   const {
     closeFile,
     currentPage,
@@ -28,9 +31,12 @@ function Reader() {
   const [playing, setPlaying] = useState(false);
   const [readingPage, setReadingPage] = useState(null);
   const [activeSentence, setActiveSentence] = useState(null);
+
   const speechControlRef = useRef(null);
   const totalPagesRef = useRef(totalPages);
   const playingRef = useRef(playing);
+
+  const isAndroid = Capacitor.getPlatform() === "android";
 
   useEffect(() => {
     totalPagesRef.current = totalPages;
@@ -56,6 +62,7 @@ function Reader() {
     if (!content || !content.text) return false;
 
     const cleanText = content.text.replace(/\*/g, "").trim();
+
     return cleanText.length > 0;
   }
 
@@ -75,6 +82,7 @@ function Reader() {
         if (hasReadableText(content)) {
           setCurrentPage(next);
           setReadingPage(next);
+
           return next;
         }
 
@@ -82,6 +90,7 @@ function Reader() {
       }
 
       setPlaying(false);
+
       return null;
     }
 
@@ -127,12 +136,14 @@ function Reader() {
 
         return next;
       }
+
       next++;
     }
 
     console.log("NENHUMA PÁGINA COM TEXTO ENCONTRADA");
 
     setPlaying(false);
+
     return null;
   }
 
@@ -143,6 +154,7 @@ function Reader() {
       return;
     }
 
+    // Modo página única
     if (mode === "portrait") {
       const nextPage = await findAndReadNextPage(pageNumber + 1);
 
@@ -154,19 +166,17 @@ function Reader() {
       return;
     }
 
-    // Landscape: par de páginas é currentPage (esquerda) e currentPage+1 (direita).
-    // Terminou a página esquerda → lê a direita sem mover a tela (não muda currentPage).
+    // Modo paisagem / duas páginas
     if (pageNumber === currentPage && currentPage + 1 <= totalPages) {
       const rightContent = await loadPage(currentPage + 1);
 
       if (hasReadableText(rightContent)) {
         setReadingPage(currentPage + 1);
-        // currentPage NÃO muda — as duas páginas continuam visíveis
+
         return;
       }
     }
 
-    // Terminou a página direita (ou esquerda sem direita legível) → avança 2 páginas
     const nextPair = currentPage + 2;
 
     if (nextPair <= totalPages) {
@@ -250,19 +260,35 @@ function Reader() {
         nextPage={nextPage}
       />
 
-      <SpeechControl
-        ref={speechControlRef}
-        currentPage={currentPage}
-        getPageContent={getPageContent}
-        mode={mode}
-        totalPages={totalPages}
-        playing={playing}
-        setPlaying={setPlaying}
-        readingPage={readingPage}
-        setReadingPage={setReadingPage}
-        setActiveSentence={setActiveSentence}
-        onFinishPage={handleFinishPage}
-      />
+      {isAndroid ? (
+        <SpeechControlMobile
+          ref={speechControlRef}
+          currentPage={currentPage}
+          getPageContent={getPageContent}
+          mode={mode}
+          totalPages={totalPages}
+          playing={playing}
+          setPlaying={setPlaying}
+          readingPage={readingPage}
+          setReadingPage={setReadingPage}
+          setActiveSentence={setActiveSentence}
+          onFinishPage={handleFinishPage}
+        />
+      ) : (
+        <SpeechControl
+          ref={speechControlRef}
+          currentPage={currentPage}
+          getPageContent={getPageContent}
+          mode={mode}
+          totalPages={totalPages}
+          playing={playing}
+          setPlaying={setPlaying}
+          readingPage={readingPage}
+          setReadingPage={setReadingPage}
+          setActiveSentence={setActiveSentence}
+          onFinishPage={handleFinishPage}
+        />
+      )}
 
       <FooterReader
         currentPage={currentPage}

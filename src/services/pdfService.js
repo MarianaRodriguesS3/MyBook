@@ -112,7 +112,6 @@ function processTextItems(items) {
     return Math.abs(item.transform[3]) || Math.abs(item.transform[0]) || 10;
   }
 
-  // --- Passo 1: agrupar itens em linhas (por proximidade vertical) ---
   const lines = [];
   let currentLine = null;
 
@@ -135,7 +134,6 @@ function processTextItems(items) {
 
   if (!lines.length) return { text: "", paragraphStarts: [] };
 
-  // --- Passo 2: margem esquerda "padrão" (moda dos x de início de linha) ---
   const xCounts = new Map();
   for (const line of lines) {
     const roundedX = Math.round(line.x);
@@ -151,7 +149,6 @@ function processTextItems(items) {
     }
   }
 
-  // --- Passo 2b: tamanho de fonte "padrão" do corpo (moda arredondada) ---
   const sizeCounts = new Map();
   for (const line of lines) {
     const roundedSize = Math.round(line.fontSize);
@@ -167,7 +164,6 @@ function processTextItems(items) {
     }
   }
 
-  // --- Passo 2c: fonte "padrão" do corpo (moda do fontName da linha) ---
   const fontCounts = new Map();
   for (const line of lines) {
     const lineFontName = (line.items[0]?.fontName || "").toLowerCase();
@@ -187,7 +183,6 @@ function processTextItems(items) {
   const TITLE_BLOCK_MAX_LINES = 3;
   const TITLE_LINE_MAX_WORDS = 6;
 
-  // --- Passo 3: montar o texto ---
   let result = "";
   let previousLine = null;
   let previousWasHeading = false;
@@ -456,7 +451,6 @@ export async function getParagraphDebugData(pdfDoc, pageNumber, scale = 1.5) {
     return Math.abs(item.transform[3]) || Math.abs(item.transform[0]) || 10;
   }
 
-  // --- Passo 1: agrupar itens em linhas (mesma lógica de processTextItems) ---
   const lines = [];
   let currentLine = null;
 
@@ -485,7 +479,6 @@ export async function getParagraphDebugData(pdfDoc, pageNumber, scale = 1.5) {
     };
   }
 
-  // --- Passo 2: moda da margem esquerda (mesma lógica de processTextItems) ---
   const xCounts = new Map();
   for (const line of lines) {
     const roundedX = Math.round(line.x);
@@ -501,7 +494,6 @@ export async function getParagraphDebugData(pdfDoc, pageNumber, scale = 1.5) {
     }
   }
 
-  // --- Passo 3: classificar cada linha (mesmos limiares de processTextItems) ---
   const breaks = [];
   let previousLine = null;
 

@@ -39,16 +39,12 @@ function SearchButton() {
       return;
     }
 
-    // Verifica se é PDF
     if (file.type !== "application/pdf") {
       alert("Selecione um arquivo PDF.");
       return;
     }
-
-    // Envia o arquivo para o ReaderContext
     openFile(file);
 
-    // Limpa o input para permitir selecionar o mesmo arquivo novamente
     event.target.value = "";
   }
 

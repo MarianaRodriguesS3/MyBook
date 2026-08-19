@@ -4,7 +4,6 @@ const MIN_FONT_SIZE = 9;
 const MAX_FONT_SIZE_PORTRAIT = 34;
 const MAX_FONT_SIZE_LANDSCAPE = 30;
 
-// 🟢 Exportada para ser reaproveitada no SpeechControl.jsx
 export function splitText(text) {
   if (!text) return [];
 
@@ -23,7 +22,6 @@ export function splitText(text) {
       continue;
     }
 
-    // Dividir por pontuação de fim de frase (. ! ?)
     const parts = trimmed
       .split(/(?<=[.!?])\s+/)
       .map((item) => item.trim())
@@ -207,10 +205,8 @@ function PageText({
           if (!sentence) return null;
 
           const isSearchMatch = index === matchSentenceIndex;
-          // activeSentence é índice de parágrafo (vindo do SpeechControl)
           const isActiveParagraph =
-            activeSentence != null &&
-            activeSentence === paragraphIndex;
+            activeSentence != null && activeSentence === paragraphIndex;
 
           return (
             <span
