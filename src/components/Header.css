@@ -41,6 +41,61 @@
   cursor: pointer;
 }
 
+.download-button {
+  position: absolute;
+  right: 20px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.download-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.download-button:hover {
+  opacity: 0.7;
+}
+
+@media (max-width: 992px) {
+  .download-button {
+    right: 16px;
+  }
+
+  .download-icon {
+    width: 23px;
+    height: 23px;
+  }
+}
+
+@media (max-width: 768px) {
+  .download-button {
+    right: 12px;
+  }
+
+  .download-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .download-button {
+    right: 10px;
+  }
+
+  .download-icon {
+    width: 21px;
+    height: 21px;
+  }
+}
+
 /*RESPONSIVIDADE */
 
 /* Tablets */
