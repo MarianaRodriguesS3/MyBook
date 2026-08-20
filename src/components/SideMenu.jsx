@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import "./SideMenu.css";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -8,8 +8,8 @@ function MenuIcon() {
   return (
     <svg
       className="icon-svg"
-      width="24"
-      height="24"
+      width="28"
+      height="28"
       viewBox="0 0 24 24"
       fill="none"
     >
@@ -35,10 +35,49 @@ function MenuIcon() {
   );
 }
 
+function CustomSelect({ label, value, options, open, onToggle, onSelect }) {
+  const selectedOption = options.find((opt) => opt.value === value);
+
+  return (
+    <div className="menu-section">
+      <label>{label}</label>
+      <button
+        type="button"
+        className={`custom-select-trigger ${open ? "open" : ""}`}
+        onClick={onToggle}
+      >
+        <span>{selectedOption?.label || value}</span>
+        <span className={`arrow ${open ? "up" : "down"}`}>▼</span>
+      </button>
+
+      {open && (
+        <div className="custom-options-container">
+          {options.map((option) => {
+            const isSelected = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={`custom-option ${isSelected ? "selected" : ""}`}
+                onClick={() => onSelect(option.value)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SideMenu({ open, toggleMenu }) {
   const { t, language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { speech, toggleSpeech } = useSpeech();
+
+  const [openSelect, setOpenSelect] = useState(null);
+
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
@@ -53,12 +92,24 @@ function SideMenu({ open, toggleMenu }) {
 
   const handleTouchEnd = () => {
     const distance = touchStartX.current - touchEndX.current;
-    const minSwipeDistance = 50;
-
-    if (distance > minSwipeDistance && open) {
+    if (distance > 50 && open) {
       toggleMenu();
     }
   };
+
+  const themeOptions = [
+    { label: t("day"), value: "dia" },
+    { label: t("night"), value: "noite" },
+    { label: t("blue"), value: "azul" },
+    { label: t("green"), value: "verde" },
+    { label: t("matrix"), value: "matrix" },
+  ];
+
+  const languageOptions = [
+    { label: "Português", value: "pt-BR" },
+    { label: "English", value: "en-US" },
+    { label: "Español", value: "es-ES" },
+  ];
 
   return (
     <aside
@@ -67,44 +118,51 @@ function SideMenu({ open, toggleMenu }) {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="side-menu-title">
+      <div className="side-menu-header">
         <button className="close-menu-button" onClick={toggleMenu}>
           <MenuIcon />
         </button>
         <h2>{t("settings")}</h2>
       </div>
 
-      {/* Tema */}
-      <div className="menu-section">
-        <label>{t("theme")}</label>
-        <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-          <option value="dia">{t("day")}</option>
-          <option value="noite">{t("night")}</option>
-          <option value="azul">{t("blue")}</option>
-          <option value="verde">{t("green")}</option>
-          <option value="matrix">{t("matrix")}</option>
-        </select>
-      </div>
+      <div className="side-menu-content">
+        <CustomSelect
+          label={t("theme")}
+          value={theme}
+          options={themeOptions}
+          open={openSelect === "theme"}
+          onToggle={() =>
+            setOpenSelect(openSelect === "theme" ? null : "theme")
+          }
+          onSelect={(val) => {
+            setTheme(val);
+            setOpenSelect(null);
+          }}
+        />
 
-      {/* Idioma */}
-      <div className="menu-section">
-        <label>{t("language")}</label>
-        <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-          <option value="pt-BR">Português</option>
-          <option value="en-US">English</option>
-          <option value="es-ES">Español</option>
-        </select>
-      </div>
+        <CustomSelect
+          label={t("language")}
+          value={language}
+          options={languageOptions}
+          open={openSelect === "language"}
+          onToggle={() =>
+            setOpenSelect(openSelect === "language" ? null : "language")
+          }
+          onSelect={(val) => {
+            setLanguage(val);
+            setOpenSelect(null);
+          }}
+        />
 
-      {/* Fala */}
-      <div className="menu-section">
-        <label>{t("speech")}</label>
-        <button
-          className={`speech-button ${speech ? "active" : "inactive"}`}
-          onClick={toggleSpeech}
-        >
-          {speech ? `🔊 ${t("enabled")}` : `🔇 ${t("disabled")}`}
-        </button>
+        <div className="menu-section">
+          <label>{t("speech")}</label>
+          <button
+            className={`speech-button ${speech ? "active" : "inactive"}`}
+            onClick={toggleSpeech}
+          >
+            {speech ? `🔊 ${t("enabled")}` : `🔇 ${t("disabled")}`}
+          </button>
+        </div>
       </div>
     </aside>
   );

@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Capacitor } from "@capacitor/core";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useReader } from "../contexts/ReaderContext";
 import ReaderBook from "../components/ReaderBook";
 import SpeechControl from "../components/SpeechControl";
-import SpeechControlMobile from "../components/SpeechControlMobile";
 import FooterReader from "../components/FooterReader";
 import "./Reader.css";
 
@@ -35,8 +33,6 @@ function Reader() {
   const speechControlRef = useRef(null);
   const totalPagesRef = useRef(totalPages);
   const playingRef = useRef(playing);
-
-  const isAndroid = Capacitor.getPlatform() === "android";
 
   useEffect(() => {
     totalPagesRef.current = totalPages;
@@ -154,7 +150,6 @@ function Reader() {
       return;
     }
 
-    // Modo página única
     if (mode === "portrait") {
       const nextPage = await findAndReadNextPage(pageNumber + 1);
 
@@ -166,7 +161,6 @@ function Reader() {
       return;
     }
 
-    // Modo paisagem / duas páginas
     if (pageNumber === currentPage && currentPage + 1 <= totalPages) {
       const rightContent = await loadPage(currentPage + 1);
 
@@ -260,35 +254,19 @@ function Reader() {
         nextPage={nextPage}
       />
 
-      {isAndroid ? (
-        <SpeechControlMobile
-          ref={speechControlRef}
-          currentPage={currentPage}
-          getPageContent={getPageContent}
-          mode={mode}
-          totalPages={totalPages}
-          playing={playing}
-          setPlaying={setPlaying}
-          readingPage={readingPage}
-          setReadingPage={setReadingPage}
-          setActiveSentence={setActiveSentence}
-          onFinishPage={handleFinishPage}
-        />
-      ) : (
-        <SpeechControl
-          ref={speechControlRef}
-          currentPage={currentPage}
-          getPageContent={getPageContent}
-          mode={mode}
-          totalPages={totalPages}
-          playing={playing}
-          setPlaying={setPlaying}
-          readingPage={readingPage}
-          setReadingPage={setReadingPage}
-          setActiveSentence={setActiveSentence}
-          onFinishPage={handleFinishPage}
-        />
-      )}
+      <SpeechControl
+        ref={speechControlRef}
+        currentPage={currentPage}
+        getPageContent={getPageContent}
+        mode={mode}
+        totalPages={totalPages}
+        playing={playing}
+        setPlaying={setPlaying}
+        readingPage={readingPage}
+        setReadingPage={setReadingPage}
+        setActiveSentence={setActiveSentence}
+        onFinishPage={handleFinishPage}
+      />
 
       <FooterReader
         currentPage={currentPage}

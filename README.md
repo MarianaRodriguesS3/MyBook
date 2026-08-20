@@ -316,3 +316,4 @@ Sempre que o usuário navegar entre páginas deverá ocorrer:
 
 - Efeito sonoro e visual de Troca de Página
 - Verificar se a api tem mais opçoes de vozes
+- Ajustar alert de arquivos diferentes de pdf

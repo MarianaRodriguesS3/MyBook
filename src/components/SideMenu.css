@@ -6,182 +6,173 @@
   height: 100vh;
   background-color: var(--surface);
   color: var(--text);
-  padding: 20px;
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.08);
   transform: translateX(-100%);
-  transition: 0.3s;
+  visibility: hidden;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0.3s;
+  will-change: transform;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  touch-action: pan-y;
 }
 
 .side-menu.open {
   transform: translateX(0);
+  visibility: visible;
 }
 
-.side-menu-title {
+.side-menu-header {
+  height: 70px;
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 40px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
 }
 
 .close-menu-button {
-  background: none;
+  background: transparent;
   border: none;
+  color: var(--text);
   cursor: pointer;
-  color: var(--icon-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 18px;
+  padding: 0;
+}
+
+.side-menu-header h2 {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1;
+}
+
+.side-menu-content {
+  padding: 30px 20px;
+  overflow-y: auto;
+}
+
+.menu-section {
+  margin-bottom: 30px;
+}
+
+.menu-section label {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.custom-select-trigger {
+  width: 100%;
+  height: 52px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--text);
+  padding: 0 15px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+}
+
+.arrow {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+}
+
+.arrow.up {
+  transform: rotate(180deg);
+}
+
+.custom-options-container {
+  margin-top: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-option {
+  width: 100%;
+  padding: 12px 15px;
+  border: none;
+  background: var(--background);
+  color: var(--text);
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.custom-option.selected {
+  background-color: var(--button-active);
+  color: #ffffff;
+}
+
+.speech-button {
+  width: 100%;
+  height: 52px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 18px;
+  cursor: pointer;
+  transition: 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.side-menu-title h2 {
-  font-size: 28px;
-  white-space: nowrap;
-}
-
-.menu-section {
-  margin-bottom: 35px;
-}
-
-.menu-section label {
-  display: block;
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.menu-section select {
-  width: 100%;
-  height: 50px;
-  padding: 0 15px;
-  font-size: 18px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--background);
-  color: var(--text);
-}
-
-.speech-button {
-  width: 100%;
-  height: 55px;
-  border: none;
-  border-radius: 8px;
-  font-size: 20px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
 .speech-button.active {
   background: var(--button-active);
-  color: white;
+  color: #ffffff;
 }
 
 .speech-button.inactive {
   background: var(--button-inactive);
   color: var(--danger);
-  border: 1px solid var(--danger);
 }
 
-/*RESPONSIVIDADE*/
+/* RESPONSIVIDADE SINCRONIZADA */
 
-/* Tablets */
 @media (max-width: 992px) {
-  .side-menu {
-    padding: 18px;
+  .side-menu-header {
+    height: 65px;
+    padding: 0 16px;
   }
-
-  .side-menu-title {
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-
-  .side-menu-title h2 {
-    font-size: 24px;
-  }
-
-  .menu-section {
-    margin-bottom: 28px;
-  }
-
-  .menu-section label {
-    font-size: 18px;
-  }
-
-  .menu-section select {
-    height: 46px;
-    font-size: 16px;
-  }
-
-  .speech-button {
-    height: 50px;
-    font-size: 18px;
-  }
-}
-
-/* Celulares */
-@media (max-width: 768px) {
-  .side-menu {
-    padding: 16px;
-  }
-
-  .side-menu-title {
-    gap: 12px;
-    margin-bottom: 28px;
-  }
-
-  .side-menu-title h2 {
+  .side-menu-header h2 {
     font-size: 22px;
   }
+}
 
-  .menu-section {
-    margin-bottom: 24px;
+@media (max-width: 768px) {
+  .side-menu-header {
+    height: 60px;
+    padding: 0 16px;
   }
-
-  .menu-section label {
-    font-size: 17px;
-  }
-
-  .menu-section select {
-    height: 44px;
-    font-size: 15px;
-    padding: 0 12px;
-  }
-
-  .speech-button {
-    height: 46px;
-    font-size: 17px;
+  .side-menu-header h2 {
+    font-size: 20px;
   }
 }
 
-/* Celulares pequenos */
 @media (max-width: 480px) {
-  .side-menu {
-    padding: 14px;
+  .side-menu-header {
+    height: 56px;
+    padding: 0 14px;
   }
-
-  .side-menu-title {
-    margin-bottom: 24px;
-  }
-
-  .side-menu-title h2 {
-    font-size: 20px;
-  }
-
-  .menu-section {
-    margin-bottom: 20px;
-  }
-
-  .menu-section label {
-    font-size: 16px;
-  }
-
-  .menu-section select {
-    height: 42px;
-    font-size: 14px;
-  }
-
-  .speech-button {
-    height: 44px;
-    font-size: 16px;
+  .side-menu-header h2 {
+    font-size: 18px;
   }
 }

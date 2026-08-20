@@ -43,10 +43,6 @@ body {
   body {
     font-size: 15px;
   }
-
-  body.capacitor {
-    padding-top: 10%;
-  }
 }
 
 /* Celulares pequenos */
