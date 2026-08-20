@@ -205,15 +205,15 @@ function PageText({
           if (!sentence) return null;
 
           const isSearchMatch = index === matchSentenceIndex;
-          const isActiveParagraph =
-            activeSentence != null && activeSentence === paragraphIndex;
+          const isActiveSentence =
+            activeSentence != null && activeSentence === index;
 
           return (
             <span
               key={index}
               ref={isSearchMatch ? highlightRef : null}
               className={
-                (isActiveParagraph ? "sentence active" : "sentence") +
+                (isActiveSentence ? "sentence active" : "sentence") +
                 (isSearchMatch ? " sentence-search-match" : "") +
                 (clickable ? " sentence-clickable" : "")
               }
